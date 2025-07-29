@@ -29,8 +29,7 @@ export class LevelComplete extends Phaser.Scene {
             const algorithm = this.getAlgorithmForLevel(nextLevel);
 
             try {
-                const response = await fetch(`http://localhost:5000/generate/${algorithm}?x=26&y=26`);
-                const levelData = await response.json();
+                const levelData = await this.fetchLevelData(algorithm, nextLevel);
 
                 this.scene.start('Game', {
                     levelId: nextLevel,
@@ -38,6 +37,7 @@ export class LevelComplete extends Phaser.Scene {
                 });
             } catch (error) {
                 console.error('Failed to load next level:', error);
+                this.showErrorMessage('Error loading next level!');
             }
         });
 
@@ -48,9 +48,43 @@ export class LevelComplete extends Phaser.Scene {
         });
     }
 
+    // Calculate algorithm based on level number
     getAlgorithmForLevel(level) {
         if (level <= 10) return 1;
         if (level <= 20) return 6;
         return 7;
+    }
+
+    // Fetch level data dynamically
+    async fetchLevelData(algorithmId, levelId) {
+        const baseUrl = `http://localhost:5000/generate/${algorithmId}`;
+
+        // Dynamic parameters based on level
+        const params = new URLSearchParams({
+            x: (25 + Math.floor(levelId / 2)).toString(), // Grid size grows slowly
+            y: (25 + Math.floor(levelId / 2)).toString(),
+            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2)*100, // Slowly increase wall density
+            iterations: (1 + Math.floor(levelId / 5)).toString(),
+            min_leaf_size: Math.max(5, 8 - Math.floor(levelId / 10)).toString(),
+            max_leaf_size: Math.min(20, 15 + Math.floor(levelId / 10)).toString(),
+            max_rooms: Math.min(25, 10 + levelId).toString()
+        });
+
+        const response = await fetch(`${baseUrl}?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch level data');
+        }
+
+        return await response.json();
+    }
+
+    // Display error message if any
+    showErrorMessage(message) {
+        // Optional: create a visible text label at the top or center
+        if (!this.errorText) {
+            this.errorText = this.add.text(100, 100, '', { fontSize: '28px', fill: '#ff0000' });
+        }
+        this.errorText.setText(message);
     }
 }

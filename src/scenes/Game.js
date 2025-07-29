@@ -12,20 +12,20 @@ export class Game extends Phaser.Scene {
 
     create() {
         const grid = this.levelData.grid;
-        const tileSize = 64; // Keep original tile size.
+        const tileSize = 128; // Keep original tile size.
 
         // Set camera bounds to match the grid size.
         this.physics.world.setBounds(0, 0, grid[0].length * tileSize, grid.length * tileSize);
         this.cameras.main.setBounds(0, 0, grid[0].length * tileSize, grid.length * tileSize);
 
         // Set camera zoom level
-        const zoomLevel = 2; // Zoom level, adjust as needed
+        const zoomLevel = 1; // Zoom level, adjust as needed
         this.cameras.main.setZoom(zoomLevel);  // Zooms in by 50% (or out if < 1)
 
         // Create walls as usual
         this.walls = this.physics.add.staticGroup();
         this.floorGroup = this.physics.add.staticGroup();  // Group for floor tiles
-        this.floorGroup.setDepth(0);
+        this.floorGroup.setDepth(0);    
 
         for (let row = 0; row < grid.length; row++) {
             for (let col = 0; col < grid[row].length; col++) {
@@ -96,13 +96,106 @@ export class Game extends Phaser.Scene {
 
         // Handle bomb collisions with walls
         this.physics.add.collider(this.player.bombs, this.walls, this.handleBombCollision, null, this);
+
+
+
+        // Add level text and timer
+        // === HUD Setup ===
+        const barWidth = 200;
+        const barHeight = 20;
+        const barX = 20;
+        const barY = 20;
+
+        // Full background bar (gray)
+        this.timeBarBackground = this.add.rectangle(barX, barY, barWidth, barHeight, 0x444444)
+            .setOrigin(0, 0)
+            .setScrollFactor(0)
+            .setDepth(100);
+
+        // Foreground bar (red, shrinking)
+        this.timeBar = this.add.rectangle(barX, barY, barWidth, barHeight, 0xff5555)
+            .setOrigin(0, 0)
+            .setScrollFactor(0)
+            .setDepth(101);
+
+        // Level text beside the bar
+        this.levelText = this.add.text(barX + barWidth + 10, barY - 2, `Level ${this.levelId}`, {
+            fontSize: '20px',
+            fill: '#ffffff'
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
+
+
+
+        this.totalTime = 30 + (this.levelId - 1) * 2;
+        this.remainingTime = this.totalTime;
+
+        this.timerEvent = this.time.addEvent({
+            delay: 1000,
+            callback: () => {
+                this.remainingTime--;
+
+                // Update bar width based on percentage
+                const percent = Phaser.Math.Clamp(this.remainingTime / this.totalTime, 0, 1);
+                this.timeBar.scaleX = percent;
+
+
+                if (this.remainingTime <= 0) {
+                    this.onTimerExpired();
+                }
+            },
+            callbackScope: this,
+            loop: true
+        });
+
+
+
     }
 
     onLevelComplete() {
+        if (this.timerEvent) this.timerEvent.remove();
         this.scene.start('LevelComplete', {
             levelId: this.levelId,
             levelData: this.levelData
         });
+    }
+    onTimerExpired() {
+        // Disable player controls or physics
+        this.player.setVelocity(0, 0);
+        this.player.body.enable = false;
+
+        // Fade camera or dark overlay
+        const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7)
+            .setOrigin(0).setScrollFactor(0).setDepth(100);
+
+        this.add.text(this.scale.width / 2, this.scale.height / 2 - 50, 'Game Over', {
+            fontSize: '48px',
+            fill: '#ffffff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+
+        const buttonStyle = {
+            fontSize: '28px',
+            fill: '#fff',
+            backgroundColor: '#444',
+            padding: { x: 20, y: 10 }
+        };
+
+        const retryBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 30, 'Retry Level', buttonStyle)
+            .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
+        retryBtn.on('pointerdown', () => {
+            this.scene.restart({
+                levelId: this.levelId,
+                levelData: this.levelData
+            });
+        });
+
+        const menuBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 80, 'Main Menu', buttonStyle)
+            .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
+        menuBtn.on('pointerdown', () => {
+            this.scene.start('MainMenu');
+        });
+
+        // Stop timer if still running
+        if (this.timerEvent) this.timerEvent.remove();
     }
     findValid2x2Spots(grid, floorValue = "1") {
         const positions = [];
@@ -140,7 +233,7 @@ export class Game extends Phaser.Scene {
         }
     }
     placeWall() {
-        const tileSize = 64;
+        const tileSize = 128;
         const playerTileX = Math.floor(this.player.x / tileSize);
         const playerTileY = Math.floor(this.player.y / tileSize);
 
@@ -170,7 +263,7 @@ export class Game extends Phaser.Scene {
         wall.tileY = targetY;
     }
     handleBombCollision = (bomb, wall) => {
-        const tileSize = 64;
+        const tileSize = 128;
 
         // Find center wall tile
         const centerX = wall.tileX;
@@ -199,7 +292,7 @@ export class Game extends Phaser.Scene {
 
                         // Replace with floor in data and visually
                         this.levelData.grid[ty][tx] = "1";
-                        this.floorGroup.create(tx * tileSize + 32, ty * tileSize + 32, 'floor').setOrigin(0.5);
+                        this.floorGroup.create(tx * tileSize + 64, ty * tileSize + 64, 'floor').setOrigin(0.5);
                     }
                 }
             }
@@ -233,6 +326,8 @@ export class Game extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.keys.placeWall)) {
             this.placeWall();
         }
+
+
 
     }
 }
