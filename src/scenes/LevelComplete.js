@@ -6,9 +6,13 @@ export class LevelComplete extends Phaser.Scene {
     init(data) {
         this.levelId = data.levelId;
         this.levelData = data.levelData;
+        this.coinsCollected = this.coinsCollected;
+        this.totalCoins = this.totalCoins;
     }
 
     create() {
+        console.log("coins collected", this.coinsCollected);
+        console.log("coins total", this.totalCoins);
         const screenWidth = this.scale.width;
         const screenHeight = this.scale.height;
 
@@ -63,7 +67,7 @@ export class LevelComplete extends Phaser.Scene {
         const params = new URLSearchParams({
             x: (25 + Math.floor(levelId / 2)).toString(), // Grid size grows slowly
             y: (25 + Math.floor(levelId / 2)).toString(),
-            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2)*100, // Slowly increase wall density
+            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2) * 100, // Slowly increase wall density
             iterations: (1 + Math.floor(levelId / 5)).toString(),
             min_leaf_size: Math.max(5, 8 - Math.floor(levelId / 10)).toString(),
             max_leaf_size: Math.min(20, 15 + Math.floor(levelId / 10)).toString(),

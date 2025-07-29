@@ -4,7 +4,6 @@ export class Game extends Phaser.Scene {
     constructor() {
         super('Game');
     }
-
     init(data) {
         this.levelId = data.levelId;
         this.levelData = data.levelData;
@@ -61,6 +60,7 @@ export class Game extends Phaser.Scene {
         });
 
         const playerStart = validSpots[0];
+
         const exitSpot = validSpots[validSpots.length - 1];
 
         const playerX = playerStart.x * tileSize + tileSize / 2;
@@ -68,7 +68,6 @@ export class Game extends Phaser.Scene {
         this.player = new Player(this, playerX, playerY);
         this.player.setDepth(10);
         this.physics.add.collider(this.player, this.walls);
-
 
         const exitX = exitSpot.x * tileSize + tileSize / 2;
         const exitY = exitSpot.y * tileSize + tileSize / 2;
@@ -164,9 +163,44 @@ export class Game extends Phaser.Scene {
         // Set up overlap detection
         this.physics.add.overlap(this.player, this.coinsGroup, this.collectCoin, null, this);
 
+        //key
+        this.hasKey = false;
+        const keySpot = floorSpots[this.totalCoins]; // Use the next unused spot after coins
+        if (keySpot) {
+            const keyX = keySpot.x * tileSize + tileSize / 2;
+            const keyY = keySpot.y * tileSize + tileSize / 2;
+            this.key = this.physics.add.staticImage(keyX, keyY, 'key').setOrigin(0.5);
+            this.physics.add.overlap(this.player, this.key, this.collectKey, null, this);
+        }
+
+        this.keyText = this.add.text(barX, barY + barHeight + 35, 'Key: ❌', {
+            fontSize: '18px',
+            fill: '#ffff00'
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
+
+
+    }
+    collectKey(player, key) {
+        key.disableBody(true, true);
+        this.hasKey = true;
+        this.keyText.setText('Key: ✅');
     }
     onLevelComplete() {
+        if (!this.hasKey) {
+            // Optional: give feedback
+            const msg = this.add.text(this.scale.width / 2, this.scale.height / 2 - 100, 'You need the key!', {
+                fontSize: '32px',
+                fill: '#ff4444',
+                backgroundColor: '#000',
+                padding: { x: 10, y: 5 }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+
+            this.time.delayedCall(1500, () => msg.destroy());
+            return;
+        }
+
         if (this.timerEvent) this.timerEvent.remove();
+
         this.scene.start('LevelComplete', {
             levelId: this.levelId,
             levelData: this.levelData,
@@ -174,6 +208,7 @@ export class Game extends Phaser.Scene {
             totalCoins: this.totalCoins
         });
     }
+
     onTimerExpired() {
         // Disable player controls or physics
         this.player.setVelocity(0, 0);
@@ -233,7 +268,6 @@ export class Game extends Phaser.Scene {
 
         return positions;
     }
-
     collectCoin(player, coin) {
         coin.disableBody(true, true);
         this.coinsCollected++;
@@ -257,7 +291,6 @@ export class Game extends Phaser.Scene {
             msg.destroy();
         });
     }
-
     placeWall() {
         const tileSize = 128;
         const playerTileX = Math.floor(this.player.x / tileSize);
