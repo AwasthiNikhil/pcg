@@ -25,7 +25,7 @@ export class Game extends Phaser.Scene {
         // Create walls as usual
         this.walls = this.physics.add.staticGroup();
         this.floorGroup = this.physics.add.staticGroup();  // Group for floor tiles
-        this.floorGroup.setDepth(0);    
+        this.floorGroup.setDepth(0);
 
         for (let row = 0; row < grid.length; row++) {
             for (let col = 0; col < grid[row].length; col++) {
@@ -97,8 +97,6 @@ export class Game extends Phaser.Scene {
         // Handle bomb collisions with walls
         this.physics.add.collider(this.player.bombs, this.walls, this.handleBombCollision, null, this);
 
-
-
         // Add level text and timer
         // === HUD Setup ===
         const barWidth = 200;
@@ -124,8 +122,6 @@ export class Game extends Phaser.Scene {
             fill: '#ffffff'
         }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
-
-
         this.totalTime = 30 + (this.levelId - 1) * 2;
         this.remainingTime = this.totalTime;
 
@@ -147,15 +143,35 @@ export class Game extends Phaser.Scene {
             loop: true
         });
 
+        this.coinText = this.add.text(barX, barY + barHeight + 10, `Coins: 0 / ${this.totalCoins}`, {
+            fontSize: '18px',
+            fill: '#ffff00'
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
+
+        // coins
+        this.coinsCollected = 0;
+        this.totalCoins = 3 + this.levelId;
+        this.coinsGroup = this.physics.add.staticGroup();
+        const floorSpots = this.findValid2x2Spots(grid); // reuse existing valid floor logic
+        Phaser.Utils.Array.Shuffle(floorSpots);
+        for (let i = 0; i < this.totalCoins && i < floorSpots.length; i++) {
+            const spot = floorSpots[i];
+            const coinX = spot.x * tileSize + tileSize / 2;
+            const coinY = spot.y * tileSize + tileSize / 2;
+            const coin = this.coinsGroup.create(coinX, coinY, 'coin').setOrigin(0.5);
+        }
+        // Set up overlap detection
+        this.physics.add.overlap(this.player, this.coinsGroup, this.collectCoin, null, this);
 
     }
-
     onLevelComplete() {
         if (this.timerEvent) this.timerEvent.remove();
         this.scene.start('LevelComplete', {
             levelId: this.levelId,
-            levelData: this.levelData
+            levelData: this.levelData,
+            coinsCollected: this.coinsCollected,
+            totalCoins: this.totalCoins
         });
     }
     onTimerExpired() {
@@ -218,20 +234,30 @@ export class Game extends Phaser.Scene {
         return positions;
     }
 
+    collectCoin(player, coin) {
+        coin.disableBody(true, true);
+        this.coinsCollected++;
 
-    collectStar(player, star) {
-        star.disableBody(this, this);
+        this.coinText.setText(`Coins: ${this.coinsCollected} / ${this.totalCoins}`);
 
-        this.score += 10;
-        this.scoreText.setText('Score: ' + this.score);
-
-        if (this.stars.countActive(true) === 0) {
-            this.stars.children.iterate(function (child) {
-                child.enableBody(true, child.x, 0, true, true)
-            });
-            this.releaseBomb();
+        // Optionally: check if all coins collected
+        if (this.coinsCollected === this.totalCoins) {
+            this.showAllCoinsCollectedMessage();
         }
     }
+    showAllCoinsCollectedMessage() {
+        const msg = this.add.text(this.scale.width / 2, 100, 'All coins collected!', {
+            fontSize: '24px',
+            fill: '#00ff00',
+            backgroundColor: '#000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(200);
+
+        this.time.delayedCall(2000, () => {
+            msg.destroy();
+        });
+    }
+
     placeWall() {
         const tileSize = 128;
         const playerTileX = Math.floor(this.player.x / tileSize);
