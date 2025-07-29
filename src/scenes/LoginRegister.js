@@ -10,8 +10,6 @@ export class LoginRegister extends Phaser.Scene {
 
     create() {
         
-        this.checkAlreadyLoggedIn();
-
         const screenWidth = 1920;
         const screenHeight = 1080;
 
@@ -157,7 +155,4 @@ export class LoginRegister extends Phaser.Scene {
         // You can update anything related to the DOM or inputs here if needed
     }
 
-    checkAlreadyLoggedIn(){
-        console.log(this.registry.get('token'));
-    }
 }

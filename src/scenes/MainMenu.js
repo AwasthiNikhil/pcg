@@ -120,8 +120,10 @@ export class MainMenu extends Phaser.Scene {
         return highestLevel + 1;
     }
     getAlgorithmForLevel(level) {
-        if (level <= 10) return 1;
-        if (level <= 20) return 6;
+        if (level <= 5) return 1;
+        if (level <= 10) return 4;
+        if (level <= 15) return 6;
+        if (level <= 20) return 2;
         return 7;
     }
     async fetchLevelData(algorithmId, levelId) {

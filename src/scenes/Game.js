@@ -8,7 +8,6 @@ export class Game extends Phaser.Scene {
         this.levelId = data.levelId;
         this.levelData = data.levelData;
     }
-
     create() {
         const grid = this.levelData.grid;
         const tileSize = 128; // Keep original tile size.
@@ -147,7 +146,6 @@ export class Game extends Phaser.Scene {
             fill: '#ffff00'
         }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
-
         // coins
         this.coinsCollected = 0;
         this.totalCoins = 3 + this.levelId;
@@ -208,8 +206,31 @@ export class Game extends Phaser.Scene {
             totalCoins: this.totalCoins
         });
     }
-
+    async addPlayerCoins(coins) {
+        const response = await fetch('http://localhost:8000/api/addCoin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + this.registry.get('token')
+            },
+            body: JSON.stringify({
+                coins: coins
+            })
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add coin');
+        }
+        return await response.json(); // optional: use returned score data
+    }
     onTimerExpired() {
+        try {
+            this.addPlayerCoins(this.coinsCollected);
+            console.log("Coins added successfully.", this.coinsCollected); //TODO: scores check later
+        } catch (error) {
+            console.error("Failed to add coins:", error);
+            this.showErrorMessage("Error addin coins.");
+        }
         // Disable player controls or physics
         this.player.setVelocity(0, 0);
         this.player.body.enable = false;
@@ -362,8 +383,6 @@ export class Game extends Phaser.Scene {
 
         // Optional: add explosion particle/sound here
     };
-
-
     update() {
         const { left, right, up, shoot } = this.keys;
 

@@ -6,13 +6,29 @@ export class LevelComplete extends Phaser.Scene {
     init(data) {
         this.levelId = data.levelId;
         this.levelData = data.levelData;
-        this.coinsCollected = this.coinsCollected;
-        this.totalCoins = this.totalCoins;
+        this.coinsCollected = data.coinsCollected;
+        this.totalCoins = data.totalCoins;
     }
-
     create() {
-        console.log("coins collected", this.coinsCollected);
-        console.log("coins total", this.totalCoins);
+        // TODO: get in init later
+        this.totalScore = 1000
+
+        // Save score to server
+        try {
+            this.submitScore(this.levelId, this.totalScore);
+            console.log("Score submitted successfully.", this.levelId, this.totalScore); //TODO: scores check later
+        } catch (error) {
+            console.error("Failed to submit score:", error);
+            this.showErrorMessage("Error saving score.");
+        }
+        try {
+            this.addPlayerCoins(this.coinsCollected);
+            console.log("Coins added successfully.",  this.coinsCollected); //TODO: scores check later
+        } catch (error) {
+            console.error("Failed to add coins:", error);
+            this.showErrorMessage("Error addin coins.");
+        }
+
         const screenWidth = this.scale.width;
         const screenHeight = this.scale.height;
 
@@ -50,8 +66,52 @@ export class LevelComplete extends Phaser.Scene {
         menuButton.on('pointerdown', () => {
             this.scene.start('MainMenu');
         });
-    }
 
+        // coins collected summary
+        this.add.text(screenWidth / 2, screenHeight / 2 - 30, `Coins: ${this.coinsCollected} / ${this.totalCoins}`, {
+            fontSize: '28px',
+            fill: '#ffff00'
+        }).setOrigin(0.5);
+    }
+    async submitScore(levelId, score) {
+        const response = await fetch('http://localhost:8000/api/scores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + this.registry.get('token') 
+            },
+            body: JSON.stringify({
+                level: levelId,
+                score: score
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to submit score');
+        }
+
+        return await response.json(); // optional: use returned score data
+    }
+    async addPlayerCoins(coins) {
+        const response = await fetch('http://localhost:8000/api/addCoin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + this.registry.get('token') 
+            },
+            body: JSON.stringify({
+                coins: coins
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add coin');
+        }
+
+        return await response.json(); // optional: use returned score data
+    }
     // Calculate algorithm based on level number
     getAlgorithmForLevel(level) {
         if (level <= 10) return 1;
