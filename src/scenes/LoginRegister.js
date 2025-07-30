@@ -128,7 +128,6 @@ export class LoginRegister extends Phaser.Scene {
             );
         };
     }
-
     async login(username, password, wrapper) {
         try {
             const response = await fetch('http://localhost:8000/api/login', {
@@ -139,9 +138,20 @@ export class LoginRegister extends Phaser.Scene {
 
             const data = await response.json();
             if (response.status === 200) {
+                const token = data.token;
+
+                // Fetch user settings using token
+                const settings = await this.fetchUserSettings(token);
+                if (!settings) {
+                    this.showErrorMessage('Failed to load user settings.');
+                    return;
+                }
+
                 wrapper.remove();
                 this.registry.set('user', data.user);
-                this.registry.set('token', data.token);
+                this.registry.set('token', token);
+                this.registry.set('userSettings', settings);
+
                 this.scene.start('MainMenu');
             } else {
                 this.showErrorMessage('Invalid username or password!');
@@ -162,9 +172,20 @@ export class LoginRegister extends Phaser.Scene {
 
             const data = await response.json();
             if (response.status === 201) {
+                const token = data.token;
+
+                // Fetch user settings using token
+                const settings = await this.fetchUserSettings(token);
+                if (!settings) {
+                    this.showErrorMessage('Failed to load user settings.');
+                    return;
+                }
+
                 wrapper.remove();
                 this.registry.set('user', data.user);
-                this.registry.set('token', data.token);
+                this.registry.set('token', token);
+                this.registry.set('userSettings', settings);
+
                 this.scene.start('MainMenu');
             } else {
                 this.showErrorMessage('Registration failed! Username might already exist.');
@@ -174,6 +195,26 @@ export class LoginRegister extends Phaser.Scene {
             this.showErrorMessage('Error registering!');
         }
     }
+    async fetchUserSettings(token) {
+        try {
+            const response = await fetch('http://localhost:8000/api/settings', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200) {
+                return await response.json();
+            } else {
+                console.warn('Failed to fetch settings:', await response.text());
+                return null;
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            return null;
+        }
+    }
+
 
     showErrorMessage(message) {
         if (this.errorMessage) {
