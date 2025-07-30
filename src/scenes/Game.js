@@ -10,9 +10,9 @@ export class Game extends Phaser.Scene {
     }
     create() {
         const grid = this.levelData.grid;
-        const tileSize = 128; // Keep original tile size.
+        const tileSize = 128; 
 
-        // Set camera bounds to match the grid size.
+        // Set camera bounds to match the grid size
         this.physics.world.setBounds(0, 0, grid[0].length * tileSize, grid.length * tileSize);
         this.cameras.main.setBounds(0, 0, grid[0].length * tileSize, grid.length * tileSize);
 
@@ -203,7 +203,8 @@ export class Game extends Phaser.Scene {
             levelId: this.levelId,
             levelData: this.levelData,
             coinsCollected: this.coinsCollected,
-            totalCoins: this.totalCoins
+            totalCoins: this.totalCoins,
+            remainingTime: this.remainingTime,
         });
     }
     async addPlayerCoins(coins) {

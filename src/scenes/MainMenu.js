@@ -4,90 +4,129 @@ export class MainMenu extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('button', 'button.png');  // Example button image
-        this.load.image('background', 'background.png');  // Example background
+        // No need for button image anymore
     }
 
     create() {
-
         const screenWidth = 1920;
         const screenHeight = 1080;
 
-        // Add background image and scale to fit screen
-        this.add.image(screenWidth / 2, screenHeight / 2, 'background').setOrigin(0.5, 0.5);
+        document.body.style.backgroundColor = '#ffffff';
 
-        // Define button height and vertical spacing between buttons
-        const buttonHeight = 100;
-        const verticalSpacing = 20;
-        const buttonWidth = 400;  // Assuming button width is 400px
+        // Title (in canvas)
+        this.add.text(screenWidth / 2 - 150, 100, 'Main Menu', {
+            fontSize: '64px',
+            fill: '#000',
+            fontFamily: 'Arial',
+        });
 
-        // Calculate the starting Y position to center the buttons
-        const startY = (screenHeight - (buttonHeight * 5) - (verticalSpacing * 4)) / 2;
+        // Wrapper div for buttons
+        const wrapper = document.createElement('div');
+        wrapper.id = 'menu-wrapper';
+        document.body.appendChild(wrapper);
 
-        // Play Button (goes to Game)
-        let playButton = this.add.sprite(screenWidth / 2, startY, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        playButton.on('pointerdown', () => {
-            // this.scene.start('Game');  // Switch to the game scene
+        // Add buttons to the wrapper
+        wrapper.innerHTML = `
+            <button class="menu-btn" id="play">Play</button>
+            <button class="menu-btn" id="leaderboard">Leaderboard</button>
+            <button class="menu-btn" id="shop">Shop</button>
+            <button class="menu-btn" id="settings">Settings</button>
+            <button class="menu-btn" id="help">Help</button>
+            <button class="menu-btn" id="logout">Log Out</button>
+            <p id="error-msg"></p>
+        `;
+
+        // Add styling via JS
+        const style = document.createElement('style');
+        style.textContent = `
+            #menu-wrapper {
+                position: absolute;
+                top: 30%;
+                left: 50%;
+                transform: translate(-50%, -25%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                font-family: Arial, sans-serif;
+            }
+
+            .menu-btn {
+                width: 400px;
+                padding: 20px;
+                font-size: 24px;
+                background: white;
+                border: 2px solid black;
+                color: black;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .menu-btn:hover {
+                background: black;
+                color: white;
+            }
+
+            #error-msg {
+                color: red;
+                font-size: 18px;
+                margin-top: 10px;
+                height: 24px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Get references to buttons
+        const playBtn = document.getElementById('play');
+        const leaderboardBtn = document.getElementById('leaderboard');
+        const shopBtn = document.getElementById('shop');
+        const settingsBtn = document.getElementById('settings');
+        const helpBtn = document.getElementById('help');
+        const logoutBtn = document.getElementById('logout');
+        this.errorMessage = document.getElementById('error-msg');
+
+        // Bind events
+        playBtn.onclick = async () => {
             try {
-                this.loadNextLevelData();
+                await this.loadNextLevelData();
             } catch (error) {
                 console.error('Error loading level:', error);
                 this.showErrorMessage('Failed to load next level!');
             }
-        });
+        };
 
-        // Leaderboard Button (goes to leaderboard)
-        let leaderboardButton = this.add.sprite(screenWidth / 2, startY + buttonHeight + verticalSpacing, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        leaderboardButton.on('pointerdown', () => {
-            this.scene.start('Leaderboard');  // Switch to the game scene
-        });
+        leaderboardBtn.onclick = () => this.scene.start('Leaderboard');
+        shopBtn.onclick = () => this.scene.start('Shop');
+        settingsBtn.onclick = () => this.scene.start('Settings');
+        helpBtn.onclick = () => this.scene.start('Help');
 
-        // Shop Button (opens shop submenu)
-        let shopButton = this.add.sprite(screenWidth / 2, startY + (buttonHeight + verticalSpacing) * 2, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        shopButton.on('pointerdown', () => {
-            this.scene.start('Shop');  // Switch to the shop scene
-        });
-
-        // Settings Button (opens settings submenu)
-        let settingsButton = this.add.sprite(screenWidth / 2, startY + (buttonHeight + verticalSpacing) * 3, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        settingsButton.on('pointerdown', () => {
-            this.scene.start('Settings');  // Switch to the settings scene
-        });
-
-        // Help Button (opens help screen)
-        let helpButton = this.add.sprite(screenWidth / 2, startY + (buttonHeight + verticalSpacing) * 4, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        helpButton.on('pointerdown', () => {
-            this.scene.start('Help');  // Switch to the help scene
-        });
-
-        // Logout Button
-        let logout = this.add.sprite(screenWidth / 2, startY + (buttonHeight + verticalSpacing) * 5, 'button').setInteractive().setDisplaySize(buttonWidth, buttonHeight);
-        logout.on('pointerdown', () => {
-            // remove all data from registry
+        logoutBtn.onclick = async () => {
             const token = this.registry.get('token');
-            this.logout(token);
-
+            await this.logout(token);
             this.registry.remove('user');
             this.registry.remove('token');
-
-            // redirect to login scene
+            wrapper.remove(); // Remove UI
             this.scene.start('LoginRegister');
+        };
+        this.events.on('shutdown', () => {
+            document.getElementById('menu-wrapper')?.remove();
         });
-
-        // Add text to buttons, centering them horizontally
-        this.add.text(screenWidth / 2 - 50, startY - 30, 'Play', { fontSize: '32px', fill: '#fff' });
-        this.add.text(screenWidth / 2 - 50, startY + buttonHeight - 30, 'Leaderboard', { fontSize: '32px', fill: '#fff' });
-        this.add.text(screenWidth / 2 - 50, startY + (buttonHeight + verticalSpacing) * 2 - 30, 'Shop', { fontSize: '32px', fill: '#fff' });
-        this.add.text(screenWidth / 2 - 60, startY + (buttonHeight + verticalSpacing) * 3 - 30, 'Settings', { fontSize: '32px', fill: '#fff' });
-        this.add.text(screenWidth / 2 - 50, startY + (buttonHeight + verticalSpacing) * 4 - 30, 'Help', { fontSize: '32px', fill: '#fff' });
-        this.add.text(screenWidth / 2 - 40, startY + (buttonHeight + verticalSpacing) * 5 - 30, 'Log Out', { fontSize: '32px', fill: '#fff' });
     }
-    // Send logout request to the backend
+
+    showErrorMessage(message) {
+        if (this.errorMessage) {
+            this.errorMessage.textContent = message;
+        }
+    }
+
     async logout(token) {
         try {
             const response = await fetch('http://localhost:8000/api/logout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
             });
 
             const data = await response.json();
@@ -119,6 +158,7 @@ export class MainMenu extends Phaser.Scene {
         const highestLevel = Math.max(...scores.map(score => score.level));
         return highestLevel + 1;
     }
+
     getAlgorithmForLevel(level) {
         if (level <= 5) return 1;
         if (level <= 10) return 4;
@@ -126,14 +166,13 @@ export class MainMenu extends Phaser.Scene {
         if (level <= 20) return 2;
         return 7;
     }
+
     async fetchLevelData(algorithmId, levelId) {
         const baseUrl = `http://localhost:5000/generate/${algorithmId}`;
-
-        // Example of dynamic parameters based on level
         const params = new URLSearchParams({
-            x: (25 + Math.floor(levelId / 2)).toString(), // Grid size grows slowly
+            x: (25 + Math.floor(levelId / 2)).toString(),
             y: (25 + Math.floor(levelId / 2)).toString(),
-            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2)*100, // Slowly increase wall density
+            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2) * 100,
             iterations: (1 + Math.floor(levelId / 5)).toString(),
             min_leaf_size: Math.max(5, 8 - Math.floor(levelId / 10)).toString(),
             max_leaf_size: Math.min(20, 15 + Math.floor(levelId / 10)).toString(),
@@ -153,7 +192,6 @@ export class MainMenu extends Phaser.Scene {
         const token = this.registry.get('token');
         const nextLevel = await this.getNextLevel(token);
         const algorithm = this.getAlgorithmForLevel(nextLevel);
-
         const levelData = await this.fetchLevelData(algorithm, nextLevel);
 
         this.scene.start('Game', {
@@ -161,13 +199,4 @@ export class MainMenu extends Phaser.Scene {
             levelData: levelData,
         });
     }
-
-    showErrorMessage(message) {
-        // Optional: create a visible text label at the top or center
-        if (!this.errorText) {
-            this.errorText = this.add.text(100, 100, '', { fontSize: '28px', fill: '#ff0000' });
-        }
-        this.errorText.setText(message);
-    }
-
 }

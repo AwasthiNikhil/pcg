@@ -2,33 +2,30 @@ export class LevelComplete extends Phaser.Scene {
     constructor() {
         super('LevelComplete');
     }
-
     init(data) {
         this.levelId = data.levelId;
         this.levelData = data.levelData;
         this.coinsCollected = data.coinsCollected;
         this.totalCoins = data.totalCoins;
+        this.remainingTime = data.remainingTime;
     }
     create() {
-        // TODO: get in init later
-        this.totalScore = 1000
+        this.totalScore = 100 + this.coinsCollected * 20 + this.remainingTime * 10;
 
         // Save score to server
         try {
             this.submitScore(this.levelId, this.totalScore);
-            console.log("Score submitted successfully.", this.levelId, this.totalScore); //TODO: scores check later
         } catch (error) {
             console.error("Failed to submit score:", error);
             this.showErrorMessage("Error saving score.");
         }
         try {
-            this.addPlayerCoins(this.coinsCollected);
-            console.log("Coins added successfully.",  this.coinsCollected); //TODO: scores check later
+            this.addPlayerCoins(this.coinsCollected * 10);
         } catch (error) {
             console.error("Failed to add coins:", error);
             this.showErrorMessage("Error addin coins.");
         }
-
+        
         const screenWidth = this.scale.width;
         const screenHeight = this.scale.height;
 
@@ -78,7 +75,7 @@ export class LevelComplete extends Phaser.Scene {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.registry.get('token') 
+                'Authorization': 'Bearer ' + this.registry.get('token')
             },
             body: JSON.stringify({
                 level: levelId,
@@ -98,7 +95,7 @@ export class LevelComplete extends Phaser.Scene {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.registry.get('token') 
+                'Authorization': 'Bearer ' + this.registry.get('token')
             },
             body: JSON.stringify({
                 coins: coins
