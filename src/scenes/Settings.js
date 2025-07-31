@@ -1,3 +1,5 @@
+import {LoadingSpinner} from '../components/LoadingSpinner.js';
+
 export class Settings extends Phaser.Scene {
     constructor() {
         super('Settings');
@@ -94,7 +96,9 @@ export class Settings extends Phaser.Scene {
                 place_wall: document.getElementById('place-wall-key').value,
             }
         };
-        console.log("payload", payload)
+        LoadingSpinner.show("Saving user settings.");
+
+
         try {
             const res = await fetch('http://localhost:8000/api/settings', {
                 method: 'PUT',
@@ -115,6 +119,8 @@ export class Settings extends Phaser.Scene {
 
         } catch (err) {
             console.error("Failed to save settings:", err);
+        }finally{
+            LoadingSpinner.hide();
         }
     }
 

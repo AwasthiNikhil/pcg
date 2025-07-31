@@ -1,3 +1,5 @@
+import {LoadingSpinner} from '../components/LoadingSpinner.js';
+
 export class LevelComplete extends Phaser.Scene {
     constructor() {
         super('LevelComplete');
@@ -45,6 +47,8 @@ export class LevelComplete extends Phaser.Scene {
             const nextLevel = this.levelId + 1;
             const algorithm = this.getAlgorithmForLevel(nextLevel);
 
+            LoadingSpinner.show("Loading next level. Might take some time.");
+
             try {
                 const levelData = await this.fetchLevelData(algorithm, nextLevel);
 
@@ -55,6 +59,8 @@ export class LevelComplete extends Phaser.Scene {
             } catch (error) {
                 console.error('Failed to load next level:', error);
                 this.showErrorMessage('Error loading next level!');
+            }finally{
+                LoadingSpinner.hide();
             }
         });
 

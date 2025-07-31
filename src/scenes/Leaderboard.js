@@ -1,3 +1,4 @@
+
 export class Leaderboard extends Phaser.Scene {
     constructor() {
         super('Leaderboard');
@@ -63,16 +64,21 @@ export class Leaderboard extends Phaser.Scene {
         header.className = 'leaderboard-row header';
         header.innerHTML = `
         <span>#</span>
-        <span>Username</span>
-        <span>${sortBy === 'score' ? 'Score' : 'Coins'}</span>
-    `;
+            <span>Username</span>
+            <span>${sortBy === 'score' ? 'Score' : 'Coins'}</span>
+        `;
         list.appendChild(header);
 
-        sorted.forEach((player, index) => {
+        // Display top 10
+        const top10 = sorted.slice(0, 10);
+        let currentUserInTop = false;
+
+        top10.forEach((player, index) => {
             const row = document.createElement('div');
             row.className = 'leaderboard-row';
             if (player.user.id === currentUserId) {
                 row.classList.add('highlight');
+                currentUserInTop = true;
             }
 
             row.innerHTML = `
@@ -82,6 +88,33 @@ export class Leaderboard extends Phaser.Scene {
         `;
             list.appendChild(row);
         });
+
+        if (!currentUserInTop) {
+            // Find actual rank of the current user
+            const actualIndex = sorted.findIndex(player => player.user.id === currentUserId);
+            if (actualIndex !== -1) {
+                const currentPlayer = sorted[actualIndex];
+
+                // Separator
+                const separator = document.createElement('div');
+                separator.className = 'leaderboard-row';
+                separator.style.borderTop = '2px solid #999';
+                separator.style.borderBottom = '2px solid #999';
+                separator.style.background = '#f9f9f9';
+                separator.innerHTML = `<span colspan="3">...</span>`;
+                list.appendChild(separator);
+
+                // Current user row
+                const row = document.createElement('div');
+                row.className = 'leaderboard-row highlight';
+                row.innerHTML = `
+                <span>${actualIndex + 1}</span>
+                <span>${currentPlayer.user.username}</span>
+                <span>${sortBy === 'score' ? currentPlayer.total_score : currentPlayer.user.coins}</span>
+            `;
+                list.appendChild(row);
+            }
+        }
     }
 
 

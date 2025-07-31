@@ -1,3 +1,5 @@
+import {LoadingSpinner} from '../components/LoadingSpinner.js';
+
 export class LoginRegister extends Phaser.Scene {
     constructor() {
         super('LoginRegister');
@@ -129,6 +131,7 @@ export class LoginRegister extends Phaser.Scene {
         };
     }
     async login(username, password, wrapper) {
+        LoadingSpinner.show("Logging you in...");
         try {
             const response = await fetch('http://localhost:8000/api/login', {
                 method: 'POST',
@@ -159,10 +162,13 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error logging in:', error);
             this.showErrorMessage('Error logging in!');
+        }finally{
+            LoadingSpinner.hide();
         }
     }
 
     async register(username, password, wrapper) {
+        LoadingSpinner.show("Registering user info...");
         try {
             const response = await fetch('http://localhost:8000/api/register', {
                 method: 'POST',
@@ -193,9 +199,12 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error registering:', error);
             this.showErrorMessage('Error registering!');
+        }finally{
+            LoadingSpinner.hide();
         }
     }
     async fetchUserSettings(token) {
+        LoadingSpinner.show("Saving settings...");
         try {
             const response = await fetch('http://localhost:8000/api/settings', {
                 headers: {
@@ -212,6 +221,8 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error fetching settings:', error);
             return null;
+        }finally{
+            LoadingSpinner.hide();
         }
     }
 

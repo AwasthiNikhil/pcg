@@ -1,3 +1,5 @@
+import {LoadingSpinner} from '../components/LoadingSpinner.js';
+
 export class MainMenu extends Phaser.Scene {
     constructor() {
         super('MainMenu');
@@ -87,11 +89,15 @@ export class MainMenu extends Phaser.Scene {
 
         // Bind events
         playBtn.onclick = async () => {
+            LoadingSpinner.show("Loading Level. Have patience...");
+
             try {
                 await this.loadNextLevelData();
             } catch (error) {
                 console.error('Error loading level:', error);
                 this.showErrorMessage('Failed to load next level!');
+            }finally{
+                LoadingSpinner.hide();
             }
         };
 
