@@ -1,4 +1,4 @@
-import {LoadingSpinner} from '../components/LoadingSpinner.js';
+import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
@@ -21,6 +21,16 @@ export class MainMenu extends Phaser.Scene {
             fill: '#000',
             fontFamily: 'Arial',
         });
+        // Phaser in-canvas coin display (top-right, tilted)
+        const coinCount = this.registry.get('user').coins || 0;
+
+        const coinText = this.add.text(screenWidth - 300, 100, `💰 Coins: ${coinCount}`, {
+            fontSize: '32px',
+            fill: '#222',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+        }).setAngle(-10);
+
 
         // Wrapper div for buttons
         const wrapper = document.createElement('div');
@@ -75,6 +85,7 @@ export class MainMenu extends Phaser.Scene {
                 margin-top: 10px;
                 height: 24px;
             }
+
         `;
         document.head.appendChild(style);
 
@@ -96,7 +107,7 @@ export class MainMenu extends Phaser.Scene {
             } catch (error) {
                 console.error('Error loading level:', error);
                 this.showErrorMessage('Failed to load next level!');
-            }finally{
+            } finally {
                 LoadingSpinner.hide();
             }
         };
@@ -126,6 +137,8 @@ export class MainMenu extends Phaser.Scene {
     }
 
     async logout(token) {
+        LoadingSpinner.show("See ya player...");
+
         try {
             const response = await fetch('http://localhost:8000/api/logout', {
                 method: 'POST',
@@ -142,6 +155,8 @@ export class MainMenu extends Phaser.Scene {
         } catch (error) {
             console.error('Error logging out:', error);
             this.showErrorMessage('Error logging out!');
+        }finally{
+            LoadingSpinner.hide();
         }
     }
 

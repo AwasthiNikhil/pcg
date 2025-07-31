@@ -443,8 +443,5 @@ export class Game extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.keys.placeWallBelow)) {
             this.placeWallBelow();
         }
-
-
-
     }
 }
