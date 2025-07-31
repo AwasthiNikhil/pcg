@@ -10,7 +10,7 @@ export class Game extends Phaser.Scene {
     }
     create() {
         const grid = this.levelData.grid;
-        const tileSize = 128; 
+        const tileSize = 128;
 
         // Set camera bounds to match the grid size
         this.physics.world.setBounds(0, 0, grid[0].length * tileSize, grid.length * tileSize);
@@ -89,7 +89,8 @@ export class Game extends Phaser.Scene {
             down: Phaser.Input.Keyboard.KeyCodes.S,
             right: Phaser.Input.Keyboard.KeyCodes.D,
             shoot: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            placeWall: Phaser.Input.Keyboard.KeyCodes.E
+            placeWall: Phaser.Input.Keyboard.KeyCodes.E,
+            placeWallBelow: Phaser.Input.Keyboard.KeyCodes.Q,
         });
 
         // Handle bomb collisions with walls
@@ -343,6 +344,40 @@ export class Game extends Phaser.Scene {
         wall.tileX = targetX;
         wall.tileY = targetY;
     }
+    placeWallBelow() {
+        const tileSize = 128;
+        const playerTileX = Math.floor(this.player.x / tileSize);
+        const playerTileY = Math.floor(this.player.y / tileSize);
+
+        const targetX = playerTileX;
+        const targetY = playerTileY + 1; // One tile below the player
+
+        const grid = this.levelData.grid;
+
+        // Bounds check
+        if (
+            targetX < 0 || targetX >= grid[0].length ||
+            targetY < 0 || targetY >= grid.length
+        ) return;
+
+        // Prevent placing on existing walls or other obstacles
+        if (grid[targetY][targetX] === "2") return;
+
+        // Update grid
+        grid[targetY][targetX] = "2";
+
+        // Create the wall in the scene
+        const wall = this.walls.create(
+            targetX * tileSize + tileSize / 2,
+            targetY * tileSize + tileSize / 2,
+            'wall'
+        );
+        wall.setOrigin(0.5);
+        wall.refreshBody();
+        wall.tileX = targetX;
+        wall.tileY = targetY;
+    }
+
     handleBombCollision = (bomb, wall) => {
         const tileSize = 128;
 
@@ -404,6 +439,9 @@ export class Game extends Phaser.Scene {
         }
         if (Phaser.Input.Keyboard.JustDown(this.keys.placeWall)) {
             this.placeWall();
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.keys.placeWallBelow)) {
+            this.placeWallBelow();
         }
 
 
