@@ -64,6 +64,7 @@ export class Leaderboard extends Phaser.Scene {
         header.className = 'leaderboard-row header';
         header.innerHTML = `
         <span>#</span>
+            <span>Avatar</span>
             <span>Username</span>
             <span>${sortBy === 'score' ? 'Score' : 'Coins'}</span>
         `;
@@ -83,6 +84,7 @@ export class Leaderboard extends Phaser.Scene {
 
             row.innerHTML = `
             <span>${index + 1}</span>
+            <span><img src="./assets/avatars/${player.user.avatar}" class="avatar-img" /></span>
             <span>${player.user.username}</span>
             <span>${sortBy === 'score' ? player.total_score : player.user.coins}</span>
         `;
@@ -109,6 +111,7 @@ export class Leaderboard extends Phaser.Scene {
                 row.className = 'leaderboard-row highlight';
                 row.innerHTML = `
                 <span>${actualIndex + 1}</span>
+                <span><img src="./assets/avatars/${player.user.avatar}" class="avatar-img" /></span>
                 <span>${currentPlayer.user.username}</span>
                 <span>${sortBy === 'score' ? currentPlayer.total_score : currentPlayer.user.coins}</span>
             `;
@@ -210,7 +213,7 @@ export class Leaderboard extends Phaser.Scene {
 
             .leaderboard-row {
                 display: grid;
-                grid-template-columns: 50px 1fr 100px;
+                grid-template-columns: 50px 60px 1fr 100px;
                 padding: 10px 15px;
                 border-bottom: 1px solid #ddd;
                 font-size: 18px;
@@ -227,6 +230,14 @@ export class Leaderboard extends Phaser.Scene {
                 background-color: #fffae6;
                 color: #d4a200;
                 font-weight: bold;
+            }
+
+            .avatar-img {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 1px solid #ccc;
             }
 
         `;
