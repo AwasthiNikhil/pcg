@@ -178,6 +178,11 @@ export class Game extends Phaser.Scene {
         }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
 
+        // When 'Escape' key is pressed, pause game and open pause menu
+        this.input.keyboard.on('keydown-ESC', () => {
+            this.scene.pause(); // Pause current game scene
+            this.scene.launch('PauseMenu'); // Launch pause menu scene
+        });
     }
     collectKey(player, key) {
         key.disableBody(true, true);

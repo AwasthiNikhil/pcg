@@ -4,6 +4,7 @@ import { Login } from './scenes/Login.js';
 import { Register } from './scenes/Register.js';
 import { MainMenu } from './scenes/MainMenu.js';
 import { Game } from './scenes/Game.js';
+import { PauseMenu } from './scenes/PauseMenu.js';
 import { Leaderboard } from './scenes/Leaderboard.js';
 import { Settings } from './scenes/Settings.js';
 import { Shop } from './scenes/Shop.js';
@@ -37,6 +38,7 @@ const config = {
         Register,
         MainMenu,
         Game,
+        PauseMenu,
         LevelComplete,
         Leaderboard,
         Shop,
