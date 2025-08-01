@@ -1,8 +1,8 @@
-import {LoadingSpinner} from '../components/LoadingSpinner.js';
+import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
-export class LoginRegister extends Phaser.Scene {
+export class Login extends Phaser.Scene {
     constructor() {
-        super('LoginRegister');
+        super('Login');
     }
 
     preload() { }
@@ -33,7 +33,7 @@ export class LoginRegister extends Phaser.Scene {
             </div>
             <div class="btn-group">
                 <button id="login-btn">Login</button>
-                <button id="register-btn">Register</button>
+                <button id="register-btn">New to game? Register Here.</button>
             </div>
             <p id="error-msg"></p>
         `;
@@ -123,12 +123,20 @@ export class LoginRegister extends Phaser.Scene {
         };
 
         registerButton.onclick = () => {
-            this.register(
-                usernameInput.value,
-                passwordInput.value,
-                wrapper
-            );
+            this.scene.start('Register');
         };
+
+
+        this.events.on('shutdown', () => {
+            document.getElementById('auth-wrapper')?.remove();
+
+            // Remove any styles injected into <head> by this scene
+            const styles = [...document.head.querySelectorAll('style')];
+            for (const s of styles) {
+                if (s.textContent.includes('#auth-wrapper')) s.remove();
+            }
+        });
+
     }
     async login(username, password, wrapper) {
         LoadingSpinner.show("Logging you in...");
@@ -162,7 +170,7 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error logging in:', error);
             this.showErrorMessage('Error logging in!');
-        }finally{
+        } finally {
             LoadingSpinner.hide();
         }
     }
@@ -199,7 +207,7 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error registering:', error);
             this.showErrorMessage('Error registering!');
-        }finally{
+        } finally {
             LoadingSpinner.hide();
         }
     }
@@ -221,7 +229,7 @@ export class LoginRegister extends Phaser.Scene {
         } catch (error) {
             console.error('Error fetching settings:', error);
             return null;
-        }finally{
+        } finally {
             LoadingSpinner.hide();
         }
     }

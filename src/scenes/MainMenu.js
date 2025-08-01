@@ -123,7 +123,7 @@ export class MainMenu extends Phaser.Scene {
             this.registry.remove('user');
             this.registry.remove('token');
             wrapper.remove(); // Remove UI
-            this.scene.start('LoginRegister');
+            this.scene.start('Login');
         };
         this.events.on('shutdown', () => {
             document.getElementById('menu-wrapper')?.remove();
