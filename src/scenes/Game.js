@@ -82,15 +82,15 @@ export class Game extends Phaser.Scene {
 
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
-        // Define controls (WASD and spacebar for shooting)
+        const bindings = this.registry.get('userSettings').keyboard_bindings;
         this.keys = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            right: Phaser.Input.Keyboard.KeyCodes.D,
-            shoot: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            placeWall: Phaser.Input.Keyboard.KeyCodes.E,
-            placeWallBelow: Phaser.Input.Keyboard.KeyCodes.Q,
+            up: bindings.jump,
+            left: bindings.move_left,
+            // down: bindings.down,
+            right: bindings.move_right,
+            shoot: bindings.shoot,
+            placeWall: bindings.place_wall,
+            placeWallBelow: bindings.place_wall_below
         });
 
         // Handle bomb collisions with walls
