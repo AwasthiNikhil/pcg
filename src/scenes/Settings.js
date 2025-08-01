@@ -7,13 +7,25 @@ export class Settings extends Phaser.Scene {
 
     create() {
         this.cleanupDOM();
-
+        const user = this.registry.get('user');
         const wrapper = document.createElement('div');
         wrapper.id = 'settings-wrapper';
         document.body.appendChild(wrapper);
 
         wrapper.innerHTML = `
            <h1>Settings</h1>
+
+            <details open class="setting-collapse">
+                <summary>Account Info</summary>
+                <div class="setting-group">
+                    <label>Username: <span>${user.username}</span></label>
+                    <label>Email: <span>${user.email}</span></label>
+                    <label>Country: <span>${user.country}</span></label>
+                    <label>Avatar:</label>
+                    <img src="assets/avatars/${user.avatar}" alt="Avatar" style="width: 100px; height: 100px; border: 2px solid #000;">
+                    <button class="menu-btn" id="change-password-btn">Change Password</button>
+                </div>
+            </details>
 
             <details open class="setting-collapse">
             <summary>Volume Settings</summary>
@@ -45,6 +57,9 @@ export class Settings extends Phaser.Scene {
 
         this.addDOMStyles();
         this.loadSettings();
+        document.getElementById('change-password-btn').onclick = () => {
+            alert('Implement change password flow here.');
+        };
     }
 
     loadSettings() {

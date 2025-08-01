@@ -9,6 +9,9 @@ export class Game extends Phaser.Scene {
         this.levelData = data.levelData;
     }
     create() {
+
+        console.log("user: ",this.registry.get('user'));
+
         const grid = this.levelData.grid;
         const tileSize = 128;
 
