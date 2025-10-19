@@ -122,7 +122,7 @@ export class Leaderboard extends Phaser.Scene {
 
 
     async fetchLeaderboard() {
-        const response = await fetch('http://localhost:8000/api/leaderboard', {
+        const response = await fetch('http://pcg.test/api/leaderboard', {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',

@@ -140,7 +140,7 @@ export class MainMenu extends Phaser.Scene {
         LoadingSpinner.show("See ya player...");
 
         try {
-            const response = await fetch('http://localhost:8000/api/logout', {
+            const response = await fetch('http://pcg.test/api/logout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     async getNextLevel(token) {
-        const response = await fetch('http://localhost:8000/api/scores', {
+        const response = await fetch('http://pcg.test/api/scores', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`

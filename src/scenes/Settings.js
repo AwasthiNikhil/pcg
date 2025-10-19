@@ -161,7 +161,7 @@ export class Settings extends Phaser.Scene {
         LoadingSpinner.show("Saving user settings.");
 
         try {
-            const res = await fetch('http://localhost:8000/api/settings', {
+            const res = await fetch('http://pcg.test/api/settings', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

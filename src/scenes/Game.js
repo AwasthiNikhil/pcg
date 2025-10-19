@@ -217,7 +217,7 @@ export class Game extends Phaser.Scene {
         });
     }
     async addPlayerCoins(coins) {
-        const response = await fetch('http://localhost:8000/api/addCoin', {
+        const response = await fetch('http://pcg.test/api/addCoin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

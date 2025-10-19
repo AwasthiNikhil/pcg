@@ -141,7 +141,7 @@ export class Login extends Phaser.Scene {
     async login(username, password, wrapper) {
         LoadingSpinner.show("Logging you in...");
         try {
-            const response = await fetch('http://localhost:8000/api/login', {
+            const response = await fetch('http://pcg.test/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -178,7 +178,7 @@ export class Login extends Phaser.Scene {
     async register(username, password, wrapper) {
         LoadingSpinner.show("Registering user info...");
         try {
-            const response = await fetch('http://localhost:8000/api/register', {
+            const response = await fetch('http://pcg.test/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -214,7 +214,7 @@ export class Login extends Phaser.Scene {
     async fetchUserSettings(token) {
         LoadingSpinner.show("Saving settings...");
         try {
-            const response = await fetch('http://localhost:8000/api/settings', {
+            const response = await fetch('http://pcg.test/api/settings', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

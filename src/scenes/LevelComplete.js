@@ -77,7 +77,7 @@ export class LevelComplete extends Phaser.Scene {
         }).setOrigin(0.5);
     }
     async submitScore(levelId, score) {
-        const response = await fetch('http://localhost:8000/api/scores', {
+        const response = await fetch('http://pcg.test/api/scores', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export class LevelComplete extends Phaser.Scene {
         return await response.json(); // optional: use returned score data
     }
     async addPlayerCoins(coins) {
-        const response = await fetch('http://localhost:8000/api/addCoin', {
+        const response = await fetch('http://pcg.test/api/addCoin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
