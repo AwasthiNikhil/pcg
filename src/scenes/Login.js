@@ -165,10 +165,10 @@ export class Login extends Phaser.Scene {
 
                 this.scene.start('MainMenu');
             } else {
-                this.showErrorMessage('Invalid username or password!');
+                this.showErrorMessage(data.message);
             }
         } catch (error) {
-            console.error('Error logging in:', error);
+            console.error('Error logging in:');
             this.showErrorMessage('Error logging in!');
         } finally {
             LoadingSpinner.hide();

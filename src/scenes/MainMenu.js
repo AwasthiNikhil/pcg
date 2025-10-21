@@ -181,23 +181,24 @@ export class MainMenu extends Phaser.Scene {
     }
 
     getAlgorithmForLevel(level) {
-        if (level <= 5) return 1;
-        if (level <= 10) return 4;
-        if (level <= 15) return 6;
-        if (level <= 20) return 2;
+        // todo: create a rule engine
+        if (level <= 2) return 1;
+        if (level <= 4) return 4;
+        if (level <= 6) return 6;
+        if (level <= 8) return 2;
         return 7;
     }
 
     async fetchLevelData(algorithmId, levelId) {
         const baseUrl = `http://localhost:5000/generate/${algorithmId}`;
         const params = new URLSearchParams({
-            x: (25 + Math.floor(levelId / 2)).toString(),
-            y: (25 + Math.floor(levelId / 2)).toString(),
+            x: (20 + 2*Math.floor(levelId / 2)).toString(),
+            y: (15 + Math.floor(levelId / 2)).toString(),
             wall_probability: (0.4 + (levelId * 0.005)).toFixed(2) * 100,
             iterations: (1 + Math.floor(levelId / 5)).toString(),
-            min_leaf_size: Math.max(5, 8 - Math.floor(levelId / 10)).toString(),
-            max_leaf_size: Math.min(20, 15 + Math.floor(levelId / 10)).toString(),
-            max_rooms: Math.min(25, 10 + levelId).toString()
+            min_leaf_size: Math.max(2, 8 - Math.floor(levelId / 10)).toString(),
+            max_leaf_size: Math.min(7, 15 + Math.floor(levelId / 10)).toString(),
+            max_rooms: Math.min(7, 10 + levelId).toString()
         });
 
         const response = await fetch(`${baseUrl}?${params.toString()}`);

@@ -17,7 +17,7 @@ export class Register extends Phaser.Scene {
         // Title
         this.add.text(screenWidth / 2 - 150, 80, 'Lucky You', { fontSize: '64px', fill: '#000' });
 
-        // Create wrapper div
+        // wrapper div
         const wrapper = document.createElement('div');
         wrapper.id = 'auth-wrapper';
         document.body.appendChild(wrapper);
@@ -307,7 +307,7 @@ export class Register extends Phaser.Scene {
             <p id="error-msg"></p>
         `;
 
-        // Apply styles (via JS for self-contained example)
+        // Apply styles
         const style = document.createElement('style');
         style.textContent = `
             #auth-wrapper {
