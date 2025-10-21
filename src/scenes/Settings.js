@@ -18,12 +18,27 @@ export class Settings extends Phaser.Scene {
             <details open class="setting-collapse">
                 <summary>Account Info</summary>
                 <div class="setting-group">
-                    <label>Username: <span>${user.username}</span></label>
-                    <label>Email: <span>${user.email}</span></label>
-                    <label>Country: <span>${user.country}</span></label>
-                    <label>Avatar:</label>
-                    <img src="assets/avatars/${user.avatar}" alt="Avatar" style="width: 100px; height: 100px; border: 2px solid #000;">
-                    <button class="menu-btn" id="change-password-btn">Change Password</button>
+                    
+<div class="profile-container">
+    <label><span id="username">demo_user</span></label>
+    <label><span id="email">user@example.com</span></label>
+    <label><span id="country">Nepal</span></label>
+    <img src="assets/avatars/avatar1.png" alt="Avatar" width="100" height="100">
+    <button class="menu-btn" id="change-password-btn">Change Password</button>
+
+    <form id="password-form" class="password-form">
+        <label for="old-password">Old Password</label>
+        <input type="password" id="old-password" name="old_password" required>
+
+        <label for="new-password">New Password</label>
+        <input type="password" id="new-password" name="new_password" required>
+
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" id="confirm-password" name="confirm_password" required>
+
+        <button type="submit">Submit</button>
+    </form>
+</div>
                 </div>
             </details>
 
@@ -57,9 +72,48 @@ export class Settings extends Phaser.Scene {
 
         this.addDOMStyles();
         this.loadSettings();
-        document.getElementById('change-password-btn').onclick = () => {
-            alert('Implement change password flow here.');
-        };
+        const passwordForm = document.getElementById('password-form');
+
+        passwordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const oldPassword = document.getElementById('old-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        if (newPassword !== confirmPassword) {
+            alert('New password and confirmation do not match.');
+            return;
+        }
+
+        // Example request (replace URL with your real API endpoint)
+        fetch('http://pcg.test/api/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': 'Bearer YOUR_TOKEN' // Include token if needed
+            },
+            body: JSON.stringify({
+                old_password: oldPassword,
+                new_password: newPassword
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert('Password changed successfully!');
+            passwordForm.reset();
+            passwordForm.style.display = 'none';
+            changeBtn.textContent = 'Change Password';
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Failed to change password.');
+        });
+    });
+    document.getElementById('change-password-btn').onclick = () => {
+        passwordForm.style.display = passwordForm.style.display === 'block' ? 'none' : 'block';
+        changeBtn.textContent = passwordForm.style.display === 'block' ? 'Cancel' : 'Change Password';
+    };
     }
 
     loadSettings() {
@@ -257,6 +311,78 @@ export class Settings extends Phaser.Scene {
                 outline: none;
                 margin-bottom: 10px;
             }
+
+    .profile-container {
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .profile-container label {
+        display: block;
+        text-align: left;
+        font-weight: 500;
+        margin: 10px 0 5px;
+    }
+
+    .profile-container span {
+        font-weight: 400;
+        color: #555;
+    }
+
+    .profile-container img {
+        border-radius: 50%;
+        margin: 15px 0;
+        object-fit: cover;
+    }
+
+    .menu-btn {
+        background-color: #6c63ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .menu-btn:hover {
+        background-color: #5848e5;
+    }
+
+    .password-form {
+        margin-top: 20px;
+        display: none;
+        text-align: left;
+    }
+
+    .password-form input {
+        width: 100%;
+        padding: 8px 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .password-form button {
+        width: 100%;
+        background-color: #6c63ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .password-form button:hover {
+        background-color: #5848e5;
+    }
+
+
         `;
         document.head.appendChild(style);
     }
