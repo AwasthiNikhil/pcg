@@ -6,12 +6,22 @@ export class MainMenu extends Phaser.Scene {
     }
 
     preload() {
-        // No need for button image anymore
     }
 
     create() {
         const screenWidth = 1920;
         const screenHeight = 1080;
+
+        const userSettings=this.registry.get('userSettings');
+        console.log(userSettings.music_volume);
+
+        if (!this.sound.get('bg_music')) {
+            this.music = this.sound.add('bg_music', {
+                loop: true,
+                volume: userSettings.music_volume / 100
+            });
+            this.music.play();
+        }
 
         document.body.style.backgroundColor = '#ffffff';
 

@@ -23,6 +23,12 @@ export class Preloader extends Phaser.Scene {
             'dude.png',
             { frameWidth : 32, frameHeight : 48}
         );
+
+        this.load.audio('bg_music', 'audio/bg_music.mp3');
+        // this.load.audio('jump', 'audio/jump.wav');
+        // this.load.audio('coin', 'audio/coin.wav');
+        // this.load.audio('game_over', 'audio/game_over.wav');
+
     }
     create() {
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.

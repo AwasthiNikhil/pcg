@@ -38,7 +38,7 @@ export class Login extends Phaser.Scene {
             <p id="error-msg"></p>
         `;
 
-        // Apply styles (via JS for self-contained example)
+        // Apply styles (via JS for self-contained )
         const style = document.createElement('style');
         style.textContent = `
             #auth-wrapper {

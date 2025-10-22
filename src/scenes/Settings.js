@@ -30,7 +30,6 @@ export class Settings extends Phaser.Scene {
 
     loadSettings() {
         const data = this.registry.get('userSettings');
-        console.log("settings", data)
         if (!data) {
             console.error("No settings in registry.");
             return;
@@ -53,9 +52,19 @@ export class Settings extends Phaser.Scene {
         sfx.value = sfx_volume;
         updateDisplay();
 
-        master.oninput = updateDisplay;
-        music.oninput = updateDisplay;
-        sfx.oninput = updateDisplay;
+        // change display label
+        master.oninput = ()=>{
+            updateDisplay();
+            this.updateIngameVolume('master',master.value);
+        }
+        music.oninput = ()=>{
+            updateDisplay();
+            this.updateIngameVolume('music',music.value);
+        }
+        sfx.oninput = ()=>{
+            updateDisplay();
+            this.updateIngameVolume('sfx',sfx.value);
+        }
 
         const setKeyInput = (id, code) => {
             const input = document.getElementById(id);
@@ -195,6 +204,20 @@ export class Settings extends Phaser.Scene {
     
     cleanupDOM() {
         document.getElementById('settings-wrapper')?.remove();
+    }
+
+    updateIngameVolume(type, volume){
+        switch(type){
+            case 'master':
+                console.log(volume, "for master");
+                break;
+            case 'music':
+                console.log(volume, "for music");
+                break;
+            case 'sfx':
+                console.log(volume, "for sfx");
+                break;
+        }
     }
 
     getWrapperHtml(user){
@@ -420,6 +443,7 @@ export class Settings extends Phaser.Scene {
         `;
         document.head.appendChild(style);
     }
+
     showErrorMessage(message) {
         if (this.errorMessage) {
             this.errorMessage.textContent = message;
@@ -427,6 +451,7 @@ export class Settings extends Phaser.Scene {
         this.successMessage.textContent = '';
 
     }
+    
     showSuccessMessage(message) {
         if (this.successMessage) {
             this.successMessage.textContent = message;
