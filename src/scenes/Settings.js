@@ -10,110 +10,22 @@ export class Settings extends Phaser.Scene {
         const user = this.registry.get('user');
         const wrapper = document.createElement('div');
         wrapper.id = 'settings-wrapper';
+        wrapper.innerHTML = this.getWrapperHtml(user);
         document.body.appendChild(wrapper);
-
-        wrapper.innerHTML = `
-           <h1>Settings</h1>
-
-            <details open class="setting-collapse">
-                <summary>Account Info</summary>
-                <div class="setting-group">
-                    
-<div class="profile-container">
-    <label><span id="username">demo_user</span></label>
-    <label><span id="email">user@example.com</span></label>
-    <label><span id="country">Nepal</span></label>
-    <img src="assets/avatars/avatar1.png" alt="Avatar" width="100" height="100">
-    <button class="menu-btn" id="change-password-btn">Change Password</button>
-
-    <form id="password-form" class="password-form">
-        <label for="old-password">Old Password</label>
-        <input type="password" id="old-password" name="old_password" required>
-
-        <label for="new-password">New Password</label>
-        <input type="password" id="new-password" name="new_password" required>
-
-        <label for="confirm-password">Confirm Password</label>
-        <input type="password" id="confirm-password" name="confirm_password" required>
-
-        <button type="submit">Submit</button>
-    </form>
-</div>
-                </div>
-            </details>
-
-            <details open class="setting-collapse">
-            <summary>Volume Settings</summary>
-            <div class="setting-group">
-                <label>Master Volume: <span id="master-val">0</span>%</label>
-                <input type="range" id="master-volume" min="0" max="100">
-            </div>
-            <div class="setting-group">
-                <label>Music Volume: <span id="music-val">0</span>%</label>
-                <input type="range" id="music-volume" min="0" max="100">
-            </div>
-            <div class="setting-group">
-                <label>SFX Volume: <span id="sfx-val">0</span>%</label>
-                <input type="range" id="sfx-volume" min="0" max="100">
-            </div>
-            </details>
-
-            <details open class="setting-collapse">
-            <summary>Controls</summary>
-            <div class="setting-group"><label>Jump Key: <input type="text" id="jump-key"></label></div>
-            <div class="setting-group"><label>Shoot Key: <input type="text" id="shoot-key"></label></div>
-            <div class="setting-group"><label>Move Left Key: <input type="text" id="left-key"></label></div>
-            <div class="setting-group"><label>Move Right Key: <input type="text" id="right-key"></label></div>
-            <div class="setting-group"><label>Place Wall Key: <input type="text" id="place-wall-key"></label></div>
-            <div class="setting-group"><label>Place Wall Below Key: <input type="text" id="place-wall-below-key"></label></div>
-            </details>
-            <button class="menu-btn" id="back-btn">Back to Menu</button>
-        `;
 
         this.addDOMStyles();
         this.loadSettings();
+
         const passwordForm = document.getElementById('password-form');
+        this.errorMessage = document.getElementById('error-msg');
+        this.successMessage = document.getElementById('success-msg');
 
-        passwordForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const oldPassword = document.getElementById('old-password').value;
-        const newPassword = document.getElementById('new-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-
-        if (newPassword !== confirmPassword) {
-            alert('New password and confirmation do not match.');
-            return;
+        document.getElementById('change-password-btn').onclick = () => {
+            passwordForm.style.display = passwordForm.style.display === 'block' ? 'none' : 'block';
+        };
+        document.getElementById('change-btn').onclick = async () => {
+                await this.changePassword();
         }
-
-        // Example request (replace URL with your real API endpoint)
-        fetch('http://pcg.test/api/change-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // 'Authorization': 'Bearer YOUR_TOKEN' // Include token if needed
-            },
-            body: JSON.stringify({
-                old_password: oldPassword,
-                new_password: newPassword
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert('Password changed successfully!');
-            passwordForm.reset();
-            passwordForm.style.display = 'none';
-            changeBtn.textContent = 'Change Password';
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Failed to change password.');
-        });
-    });
-    document.getElementById('change-password-btn').onclick = () => {
-        passwordForm.style.display = passwordForm.style.display === 'block' ? 'none' : 'block';
-        changeBtn.textContent = passwordForm.style.display === 'block' ? 'Cancel' : 'Change Password';
-    };
     }
 
     loadSettings() {
@@ -194,7 +106,6 @@ export class Settings extends Phaser.Scene {
         return match ? match[0] : '';
     }
 
-
     async saveSettings() {
         const token = this.registry.get('token');
 
@@ -239,13 +150,135 @@ export class Settings extends Phaser.Scene {
         }
     }
 
+    resetPasswordFields(){
+        document.getElementById('old-password').value='';
+        document.getElementById('new-password').value='';
+        document.getElementById('confirm-password').value='';
+    }
+
+    async changePassword(){
+        const oldPassword = document.getElementById('old-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        if (newPassword !== confirmPassword) {
+            this.showErrorMessage('New password and confirmation do not match.');
+            return;
+        }
+        const token = this.registry.get('token');
+
+        try{
+            LoadingSpinner.show("Changing password...");
+            const response = await  fetch('http://pcg.test/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        old_password: oldPassword,
+                        new_password: newPassword
+                    })
+                });
+            const data = await response.json();
+            if (response.status === 200) {
+                this.showSuccessMessage(data.message);
+                this.resetPasswordFields();
+            }else{
+                this.showErrorMessage(data.message);
+            }
+        }catch (error) {
+            this.showErrorMessage('Error changing password!');
+        } finally {
+            LoadingSpinner.hide();
+        }           
+    }
+    
     cleanupDOM() {
         document.getElementById('settings-wrapper')?.remove();
+    }
+
+    getWrapperHtml(user){
+        return  `
+           <h1>Settings</h1>
+            <details open class="setting-collapse">
+                <summary>Account Info</summary>
+                <div class="profile-container">
+                    <div class="player-banner">
+                    <div class="player-info">
+                        <div class="username">${user.username}</div>
+                        <div class="email">${user.email}</div>
+                        <div class="joined">Joined ${Math.floor((new Date()-new Date(user.created_at))/ (1000 * 60 * 60 * 24))} days ago</div>
+                    </div>
+                    
+                    <div class="avatar-container">
+                        <img src="assets/avatars/${user.avatar}" alt="Profile Icon" class="avatar">
+                        <img src="assets/flags/${user.country}.png" alt="Country Flag" class="flag">
+                    </div>
+                    </div>
+
+                    <button class="menu-btn" id="change-password-btn">Change Password</button>
+                    <form id="password-form" class="password-form">
+                        <p id="error-msg"></p>
+                        <p id="success-msg"></p>
+                        <div class="setting-group">
+                            <label for="old-password">
+                                Old Password: 
+                                <input type="password" id="old-password" name="old_password">
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label for="new-password">
+                                New Password
+                                <input type="password" id="new-password" name="new_password">
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label for="confirm-password">
+                                Confirm Password
+                                <input type="password" id="confirm-password" name="confirm_password">
+                                <input type='button' id='change-btn' value='Submit'/>            
+                            </label>
+                    </form>
+                </div>
+            </details>
+
+            <details open class="setting-collapse">
+            <summary>Volume Settings</summary>
+            <div class="setting-group">
+                <label>Master Volume: <span id="master-val">0</span>%</label>
+                <input type="range" id="master-volume" min="0" max="100">
+            </div>
+            <div class="setting-group">
+                <label>Music Volume: <span id="music-val">0</span>%</label>
+                <input type="range" id="music-volume" min="0" max="100">
+            </div>
+            <div class="setting-group">
+                <label>SFX Volume: <span id="sfx-val">0</span>%</label>
+                <input type="range" id="sfx-volume" min="0" max="100">
+            </div>
+            </details>
+
+            <details open class="setting-collapse">
+            <summary>Controls</summary>
+            <div class="setting-group"><label>Jump Key: <input type="text" id="jump-key"></label></div>
+            <div class="setting-group"><label>Shoot Key: <input type="text" id="shoot-key"></label></div>
+            <div class="setting-group"><label>Move Left Key: <input type="text" id="left-key"></label></div>
+            <div class="setting-group"><label>Move Right Key: <input type="text" id="right-key"></label></div>
+            <div class="setting-group"><label>Place Wall Key: <input type="text" id="place-wall-key"></label></div>
+            <div class="setting-group"><label>Place Wall Below Key: <input type="text" id="place-wall-below-key"></label></div>
+            </details>
+            <button class="menu-btn" id="back-btn">Back to Menu</button>
+        `;
     }
 
     addDOMStyles() {
         const style = document.createElement('style');
         style.textContent = `
+
+            #success-msg{
+                color:green;
+            }
+
             #settings-wrapper {
                 position: absolute;
                 top: 10%;
@@ -312,78 +345,93 @@ export class Settings extends Phaser.Scene {
                 margin-bottom: 10px;
             }
 
-    .profile-container {
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-
-    .profile-container label {
-        display: block;
-        text-align: left;
-        font-weight: 500;
-        margin: 10px 0 5px;
-    }
-
-    .profile-container span {
-        font-weight: 400;
-        color: #555;
-    }
-
-    .profile-container img {
-        border-radius: 50%;
-        margin: 15px 0;
-        object-fit: cover;
-    }
-
-    .menu-btn {
-        background-color: #6c63ff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 15px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: background 0.2s;
-    }
-
-    .menu-btn:hover {
-        background-color: #5848e5;
-    }
-
-    .password-form {
-        margin-top: 20px;
-        display: none;
-        text-align: left;
-    }
-
-    .password-form input {
-        width: 100%;
-        padding: 8px 10px;
-        margin: 8px 0;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 14px;
-    }
-
-    .password-form button {
-        width: 100%;
-        background-color: #6c63ff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px;
-        margin-top: 10px;
-        cursor: pointer;
-        font-weight: 500;
-    }
-
-    .password-form button:hover {
-        background-color: #5848e5;
-    }
+            .password-form {
+                margin-top: 20px;
+                display: none;
+                text-align: left;
+            }
+            .password-form input {
+                width: 100%;
+                padding: 8px 10px;
+                margin: 8px 0;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            .password-form button {
+                width: 100%;
+                background-color: #fff;
+                color: black;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+                margin-top: 10px;
+                cursor: pointer;
+                font-weight: 500;
+            }
+            .password-form button:hover {
+                background-color: #000;
+                color:#fff;
+            }
 
 
+            .player-banner {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
+                gap: 8px 20px;
+                border: 1px solid black;
+                padding: 20px 30px;
+                position: relative;
+                align-items: center;
+            }
+            .player-info>div{
+                margin-bottom: 10px;
+            }
+
+            .username{
+                font-weight: bold;
+            }
+            
+            /* Avatar section */
+            .avatar-container {
+                grid-row: 1 / span 2; /* make avatar span 2 rows */
+                position: relative;
+            }
+
+            .avatar {
+                width: 75px;
+                height: 75px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            /* Country flag overlay */
+            .flag {
+                position: absolute;
+                bottom: 5px;
+                left: 5px;
+                width: 28px;
+                height: 20px;
+                border-radius: 4px;
+                object-fit: cover;
+                box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            }
         `;
         document.head.appendChild(style);
+    }
+    showErrorMessage(message) {
+        if (this.errorMessage) {
+            this.errorMessage.textContent = message;
+        }
+        this.successMessage.textContent = '';
+
+    }
+    showSuccessMessage(message) {
+        if (this.successMessage) {
+            this.successMessage.textContent = message;
+        }
+        this.errorMessage.textContent = '';
+
     }
 }
