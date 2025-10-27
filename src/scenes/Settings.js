@@ -212,7 +212,12 @@ export class Settings extends Phaser.Scene {
                 console.log(volume, "for master");
                 break;
             case 'music':
-                console.log(volume, "for music");
+                const bg_music = this.sound.get('bg_music');
+                if (bg_music) {
+                    bg_music.setVolume(volume/ 100);
+                }else{
+                    console.log("No bg_music found.")
+                }
                 break;
             case 'sfx':
                 console.log(volume, "for sfx");
