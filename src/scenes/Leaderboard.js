@@ -84,7 +84,7 @@ export class Leaderboard extends Phaser.Scene {
 
             row.innerHTML = `
             <span>${index + 1}</span>
-            <span><img src="./assets/avatars/${player.user.avatar}" class="avatar-img" /></span>
+            <span><img src="./assets/avatars/${player.user.avatar}.png" class="avatar-img" /></span>
             <span>${player.user.username}</span>
             <span>${sortBy === 'score' ? player.total_score : player.user.coins}</span>
         `;
@@ -111,7 +111,7 @@ export class Leaderboard extends Phaser.Scene {
                 row.className = 'leaderboard-row highlight';
                 row.innerHTML = `
                 <span>${actualIndex + 1}</span>
-                <span><img src="./assets/avatars/${player.user.avatar}" class="avatar-img" /></span>
+                <span><img src="./assets/avatars/${player.user.avatar}.png" class="avatar-img" /></span>
                 <span>${currentPlayer.user.username}</span>
                 <span>${sortBy === 'score' ? currentPlayer.total_score : currentPlayer.user.coins}</span>
             `;

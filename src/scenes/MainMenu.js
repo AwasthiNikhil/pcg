@@ -20,7 +20,7 @@ export class MainMenu extends Phaser.Scene {
                 volume: userSettings.music_volume / 100
             });
         }
-        this.music.play();
+            this.music.play();
 
         document.body.style.backgroundColor = '#ffffff';
 

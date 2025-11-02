@@ -35,28 +35,21 @@ export class Settings extends Phaser.Scene {
             return;
         }
 
-        const { master_volume, music_volume, sfx_volume, keyboard_bindings } = data;
+        const { music_volume, sfx_volume, keyboard_bindings } = data;
 
-        const master = document.getElementById('master-volume');
         const music = document.getElementById('music-volume');
         const sfx = document.getElementById('sfx-volume');
 
         const updateDisplay = () => {
-            document.getElementById('master-val').textContent = master.value;
             document.getElementById('music-val').textContent = music.value;
             document.getElementById('sfx-val').textContent = sfx.value;
         };
 
-        master.value = master_volume;
         music.value = music_volume;
         sfx.value = sfx_volume;
         updateDisplay();
 
         // change display label
-        master.oninput = ()=>{
-            updateDisplay();
-            this.updateIngameVolume('master',master.value);
-        }
         music.oninput = ()=>{
             updateDisplay();
             this.updateIngameVolume('music',music.value);
@@ -119,7 +112,6 @@ export class Settings extends Phaser.Scene {
         const token = this.registry.get('token');
 
         const payload = {
-            "master_volume": parseInt(document.getElementById('master-volume').value),
             "music_volume": parseInt(document.getElementById('music-volume').value),
             "sfx_volume": parseInt(document.getElementById('sfx-volume').value),
             "keyboard_bindings": {
@@ -208,9 +200,6 @@ export class Settings extends Phaser.Scene {
 
     updateIngameVolume(type, volume){
         switch(type){
-            case 'master':
-                console.log(volume, "for master");
-                break;
             case 'music':
                 const bg_music = this.sound.get('bg_music');
                 if (bg_music) {
@@ -277,10 +266,6 @@ export class Settings extends Phaser.Scene {
 
             <details open class="setting-collapse">
             <summary>Volume Settings</summary>
-            <div class="setting-group">
-                <label>Master Volume: <span id="master-val">0</span>%</label>
-                <input type="range" id="master-volume" min="0" max="100">
-            </div>
             <div class="setting-group">
                 <label>Music Volume: <span id="music-val">0</span>%</label>
                 <input type="range" id="music-volume" min="0" max="100">
