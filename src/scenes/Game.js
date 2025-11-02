@@ -10,7 +10,7 @@ export class Game extends Phaser.Scene {
     }
     create() {
 
-        console.log("user: ",this.registry.get('user'));
+        console.log("settings: ",this.registry.get('userSettings'));
 
         const grid = this.levelData.grid;
         const tileSize = 128;
@@ -85,7 +85,9 @@ export class Game extends Phaser.Scene {
 
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
-        const bindings = this.registry.get('userSettings').keyboard_bindings;
+
+        this.userSettings = this.registry.get('userSettings');
+        const bindings = this.userSettings.keyboard_bindings;
         this.keys = this.input.keyboard.addKeys({
             up: bindings.jump,
             left: bindings.move_left,
@@ -186,6 +188,8 @@ export class Game extends Phaser.Scene {
             this.scene.pause(); // Pause current game scene
             this.scene.launch('PauseMenu'); // Launch pause menu scene
         });
+
+
     }
     collectKey(player, key) {
         key.disableBody(true, true);
@@ -302,7 +306,12 @@ export class Game extends Phaser.Scene {
     collectCoin(player, coin) {
         coin.disableBody(true, true);
         this.coinsCollected++;
-
+        
+        this.coin_sound = this.sound.add('coin', {
+            loop: false,
+            volume: this.userSettings.sfx_volume / 100
+        });
+        this.coin_sound.play();
         this.coinText.setText(`Coins: ${this.coinsCollected} / ${this.totalCoins}`);
 
         // Optionally: check if all coins collected

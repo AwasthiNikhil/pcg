@@ -220,7 +220,12 @@ export class Settings extends Phaser.Scene {
                 }
                 break;
             case 'sfx':
-                console.log(volume, "for sfx");
+                const sfx = this.sound.get('sfx');
+                if (sfx) {
+                    sfx.setVolume(volume/ 100);
+                }else{
+                    console.log("No sfx found.")
+                }
                 break;
         }
     }

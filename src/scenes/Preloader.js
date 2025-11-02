@@ -25,8 +25,9 @@ export class Preloader extends Phaser.Scene {
         );
 
         this.load.audio('bg_music', 'audio/bg_music.mp3');
+        this.load.audio('level_complete', 'audio/level_complete.mp3');
+        this.load.audio('coin', 'audio/coin.mp3');
         // this.load.audio('jump', 'audio/jump.wav');
-        // this.load.audio('coin', 'audio/coin.wav');
         // this.load.audio('game_over', 'audio/game_over.wav');
 
     }

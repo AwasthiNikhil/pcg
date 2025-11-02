@@ -13,7 +13,6 @@ export class MainMenu extends Phaser.Scene {
         const screenHeight = 1080;
 
         const userSettings=this.registry.get('userSettings');
-        console.log(userSettings.music_volume);
 
         if (!this.sound.get('bg_music')) {
             this.music = this.sound.add('bg_music', {
@@ -34,13 +33,12 @@ export class MainMenu extends Phaser.Scene {
         // Phaser in-canvas coin display (top-right, tilted)
         const coinCount = this.registry.get('user').coins || 0;
 
-        const coinText = this.add.text(screenWidth - 300, 100, `💰 Coins: ${coinCount}`, {
+        this.add.text(screenWidth - 300, 100, `💰 Coins: ${coinCount}`, {
             fontSize: '32px',
             fill: '#222',
             fontFamily: 'Arial',
             fontStyle: 'bold',
         }).setAngle(-10);
-
 
         // Wrapper div for buttons
         const wrapper = document.createElement('div');
@@ -111,7 +109,6 @@ export class MainMenu extends Phaser.Scene {
         // Bind events
         playBtn.onclick = async () => {
             LoadingSpinner.show("Loading Level. Have patience...");
-
             try {
                 await this.loadNextLevelData();
             } catch (error) {
