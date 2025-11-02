@@ -12,6 +12,14 @@ export class LevelComplete extends Phaser.Scene {
         this.remainingTime = data.remainingTime;
     }
     create() {
+        this.userSettings = this.registry.get('userSettings');
+
+        this.level_complete_sound = this.sound.add('level_complete', {
+            loop: false,
+            volume: this.userSettings.sfx_volume / 100
+        });
+        this.level_complete_sound.play();
+
         this.totalScore = 100 + this.coinsCollected * 20 + this.remainingTime * 10;
 
         // Save score to server

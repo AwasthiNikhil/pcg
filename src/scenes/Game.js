@@ -10,7 +10,14 @@ export class Game extends Phaser.Scene {
     }
     create() {
 
-        console.log("settings: ",this.registry.get('userSettings'));
+        this.userSettings = this.registry.get('userSettings');
+
+        this.sound.pauseAll();
+        this.ingame_sound = this.sound.add('ingame', {
+            loop: true,
+            volume: this.userSettings.music_volume / 100
+        });
+        this.ingame_sound.play();
 
         const grid = this.levelData.grid;
         const tileSize = 128;
@@ -86,7 +93,6 @@ export class Game extends Phaser.Scene {
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
 
-        this.userSettings = this.registry.get('userSettings');
         const bindings = this.userSettings.keyboard_bindings;
         this.keys = this.input.keyboard.addKeys({
             up: bindings.jump,
@@ -182,19 +188,24 @@ export class Game extends Phaser.Scene {
             fill: '#ffff00'
         }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
-
         // When 'Escape' key is pressed, pause game and open pause menu
         this.input.keyboard.on('keydown-ESC', () => {
             this.scene.pause(); // Pause current game scene
             this.scene.launch('PauseMenu'); // Launch pause menu scene
         });
 
-
     }
     collectKey(player, key) {
         key.disableBody(true, true);
         this.hasKey = true;
         this.keyText.setText('Key: ✅');
+
+        this.key_suound = this.sound.add('key', {
+            loop: false,
+            volume: this.userSettings.sfx_volume / 100
+        });
+        this.key_suound.play();
+
     }
     onLevelComplete() {
         if (!this.hasKey) {
@@ -306,14 +317,14 @@ export class Game extends Phaser.Scene {
     collectCoin(player, coin) {
         coin.disableBody(true, true);
         this.coinsCollected++;
+        this.coinText.setText(`Coins: ${this.coinsCollected} / ${this.totalCoins}`);
         
         this.coin_sound = this.sound.add('coin', {
             loop: false,
             volume: this.userSettings.sfx_volume / 100
         });
         this.coin_sound.play();
-        this.coinText.setText(`Coins: ${this.coinsCollected} / ${this.totalCoins}`);
-
+        
         // Optionally: check if all coins collected
         if (this.coinsCollected === this.totalCoins) {
             this.showAllCoinsCollectedMessage();

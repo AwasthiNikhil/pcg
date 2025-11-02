@@ -13,14 +13,14 @@ export class MainMenu extends Phaser.Scene {
         const screenHeight = 1080;
 
         const userSettings=this.registry.get('userSettings');
-
+        this.sound.pauseAll();
         if (!this.sound.get('bg_music')) {
             this.music = this.sound.add('bg_music', {
                 loop: true,
                 volume: userSettings.music_volume / 100
             });
-            this.music.play();
         }
+        this.music.play();
 
         document.body.style.backgroundColor = '#ffffff';
 
