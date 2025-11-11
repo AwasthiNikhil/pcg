@@ -1,4 +1,5 @@
 import { Player } from '../gameObjects/Player.js';
+import { PatrollingEnemy } from '../gameObjects/PatrollingEnemy.js';
 
 export class Game extends Phaser.Scene {
     constructor() {
@@ -194,7 +195,49 @@ export class Game extends Phaser.Scene {
             this.scene.launch('PauseMenu'); // Launch pause menu scene
         });
 
+        // Enemies
+        this.enemies = this.physics.add.group({
+            classType: PatrollingEnemy,
+            runChildUpdate: true // Ensure enemies' update methods are called
+        });
+        this.physics.add.collider(this.enemies, this.walls);
+        this.physics.add.collider(this.enemies, this.floorGroup);
+        this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, null, this);
+
+        this.spawnEnemies();
+
     }
+
+    spawnEnemies() {
+        if (this.levelId < 3) {
+            return; // No enemies before level 3
+        }
+
+        const grid = this.levelData.grid;
+        const tileSize = 128;
+        const floorSpots = this.findValid2x2Spots(grid);
+        Phaser.Utils.Array.Shuffle(floorSpots);
+
+        // Determine number of enemies based on level
+        const numEnemies = Math.min(Math.floor((this.levelId - 2) / 2), 5); // 1 enemy at level 3, 2 at 5, etc., max 5
+
+        for (let i = 0; i < numEnemies && i < floorSpots.length; i++) {
+            // Avoid spots near player start and exit
+            const spot = floorSpots[i];
+            if (Phaser.Math.Distance.Between(spot.x, spot.y, this.player.x / tileSize, this.player.y / tileSize) < 5) {
+                continue;
+            }
+
+            const enemyX = spot.x * tileSize + tileSize / 2;
+            const enemyY = spot.y * tileSize - tileSize / 2; // Place it slightly above the floor
+            this.enemies.get(enemyX, enemyY);
+        }
+    }
+
+    hitEnemy(player, enemy) {
+        this.onTimerExpired(); // Reuse game over logic
+    }
+
     collectKey(player, key) {
         key.disableBody(true, true);
         this.hasKey = true;
