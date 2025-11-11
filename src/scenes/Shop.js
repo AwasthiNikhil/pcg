@@ -37,7 +37,7 @@ export class Shop extends Phaser.Scene {
         return [
             { id: 1, name: 'Bomb', price: 20, description: 'Destroys nearby walls' },
             { id: 2, name: 'Wall Block', price: 10, description: 'Place a solid wall' },
-            { id: 3, name: 'Speed Boost', price: 30, description: 'Temporarily move faster' },
+            // { id: 3, name: 'Speed Boost', price: 30, description: 'Temporarily move faster' },
         ];
     }
 
