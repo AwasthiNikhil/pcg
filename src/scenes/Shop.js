@@ -33,13 +33,37 @@ export class Shop extends Phaser.Scene {
         this.activateTab('powerups'); // Load default tab
     }
 
-    getPowerUps() {
-        return [
-            { id: 1, name: 'Bomb', price: 20, description: 'Destroys nearby walls' },
-            { id: 2, name: 'Wall Block', price: 10, description: 'Place a solid wall' },
-            // { id: 3, name: 'Speed Boost', price: 30, description: 'Temporarily move faster' },
-        ];
+    async fetchPowerUps() {
+        const token = this.registry.get('token');
+        if (!token) {
+            console.error('No auth token found in registry');
+            return [];
+        }
+
+        try {
+            const response = await fetch('http://pcg.test/api/items', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch items:', response.statusText);
+                return [];
+            }
+
+            const allItems = await response.json();
+            // Filter for items with type "item" as requested
+            return allItems.filter(item => item.type === 'item');
+
+        } catch (error) {
+            console.error('Error fetching power-ups:', error);
+            return [];
+        }
     }
+
+    
 
     async fetchSkins() {
         // Placeholder for dynamic fetch later
@@ -56,7 +80,7 @@ export class Shop extends Phaser.Scene {
         document.getElementById(`tab-${tabName}`).classList.add('active');
 
         if (tabName === 'powerups') {
-            this.displayShopItems(this.getPowerUps(), false);
+            this.fetchPowerUps().then(data => this.displayShopItems(data, false));
         } else {
             this.fetchSkins().then(data => this.displayShopItems(data, true));
         }

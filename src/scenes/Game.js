@@ -1,5 +1,8 @@
 import { Player } from '../gameObjects/Player.js';
 import { PatrollingEnemy } from '../gameObjects/PatrollingEnemy.js';
+import { ShootingEnemy } from '../gameObjects/ShootingEnemy.js';
+import { ChasingEnemy } from '../gameObjects/ChasingEnemy.js';
+import { Projectile } from '../gameObjects/Projectile.js';
 
 export class Game extends Phaser.Scene {
     constructor() {
@@ -195,46 +198,97 @@ export class Game extends Phaser.Scene {
             this.scene.launch('PauseMenu'); // Launch pause menu scene
         });
 
-        // Enemies
-        this.enemies = this.physics.add.group({
-            classType: PatrollingEnemy,
-            runChildUpdate: true // Ensure enemies' update methods are called
-        });
-        this.physics.add.collider(this.enemies, this.walls);
-        this.physics.add.collider(this.enemies, this.floorGroup);
-        this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, null, this);
+        // --- Enemy Setup ---
+        this.patrollingEnemies = this.physics.add.group({ classType: PatrollingEnemy, runChildUpdate: true });
+        this.shootingEnemies = this.physics.add.group({ classType: ShootingEnemy, runChildUpdate: true });
+        this.chasingEnemies = this.physics.add.group({ classType: ChasingEnemy, runChildUpdate: true });
+
+        this.projectiles = this.physics.add.group({ classType: Projectile, runChildUpdate: true });
+        this.projectiles.createMultiple({ key: 'star', quantity: 10, active: false, visible: false, classType: Projectile });
+
+        // Enemy-world colliders
+        this.physics.add.collider(this.patrollingEnemies, this.walls);
+        this.physics.add.collider(this.patrollingEnemies, this.floorGroup);
+        this.physics.add.collider(this.shootingEnemies, this.walls);
+        this.physics.add.collider(this.shootingEnemies, this.floorGroup);
+        this.physics.add.collider(this.chasingEnemies, this.walls);
+        this.physics.add.collider(this.chasingEnemies, this.floorGroup);
+
+        // Player-enemy colliders
+        this.physics.add.overlap(this.player, this.patrollingEnemies, this.hitEnemy, null, this);
+        this.physics.add.overlap(this.player, this.shootingEnemies, this.hitEnemy, null, this);
+        this.physics.add.overlap(this.player, this.chasingEnemies, this.hitEnemy, null, this);
+
+        // Projectile-world/player colliders
+        this.physics.add.collider(this.projectiles, this.walls, (projectile) => { projectile.setActive(false); projectile.setVisible(false); });
+        this.physics.add.overlap(this.player, this.projectiles, this.hitEnemy, null, this);
+
+        // Player bomb-enemy colliders
+        this.physics.add.collider(this.player.bombs, this.patrollingEnemies, this.damageEnemy, null, this);
+        this.physics.add.collider(this.player.bombs, this.shootingEnemies, this.damageEnemy, null, this);
+        this.physics.add.collider(this.player.bombs, this.chasingEnemies, this.damageEnemy, null, this);
 
         this.spawnEnemies();
+    }
 
+    damageEnemy(bomb, enemy) {
+        bomb.disableBody(true, true); // Remove the bomb
+        enemy.destroy(); // Remove the enemy
+        // Optional: Add an explosion animation or sound effect here
     }
 
     spawnEnemies() {
-        if (this.levelId < 3) {
-            return; // No enemies before level 3
-        }
-
         const grid = this.levelData.grid;
         const tileSize = 128;
         const floorSpots = this.findValid2x2Spots(grid);
         Phaser.Utils.Array.Shuffle(floorSpots);
 
-        // Determine number of enemies based on level
-        const numEnemies = Math.min(Math.floor((this.levelId - 2) / 2), 5); // 1 enemy at level 3, 2 at 5, etc., max 5
+        let spotIndex = 0;
 
-        for (let i = 0; i < numEnemies && i < floorSpots.length; i++) {
-            // Avoid spots near player start and exit
-            const spot = floorSpots[i];
-            if (Phaser.Math.Distance.Between(spot.x, spot.y, this.player.x / tileSize, this.player.y / tileSize) < 5) {
-                continue;
+        // Spawn Patrolling Enemies
+        if (this.levelId >= 3) {
+            const numPatrolling = Math.min(Math.floor((this.levelId - 2) / 2), 2); // Max 2
+            for (let i = 0; i < numPatrolling && spotIndex < floorSpots.length; i++, spotIndex++) {
+                const spot = floorSpots[spotIndex];
+                if (Phaser.Math.Distance.Between(spot.x, spot.y, this.player.x / tileSize, this.player.y / tileSize) < 5) continue;
+                const enemyX = spot.x * tileSize + tileSize / 2;
+                const enemyY = spot.y * tileSize - tileSize / 2;
+                this.patrollingEnemies.get(enemyX, enemyY);
             }
+        }
 
-            const enemyX = spot.x * tileSize + tileSize / 2;
-            const enemyY = spot.y * tileSize - tileSize / 2; // Place it slightly above the floor
-            this.enemies.get(enemyX, enemyY);
+        // Spawn Chasing Enemies
+        if (this.levelId >= 10) {
+            const numChasing = Math.min(Math.floor((this.levelId - 9) / 2), 2); // Max 2
+            for (let i = 0; i < numChasing && spotIndex < floorSpots.length; i++, spotIndex++) {
+                const spot = floorSpots[spotIndex];
+                if (Phaser.Math.Distance.Between(spot.x, spot.y, this.player.x / tileSize, this.player.y / tileSize) < 10) continue;
+                const enemyX = spot.x * tileSize + tileSize / 2;
+                const enemyY = spot.y * tileSize - tileSize / 2;
+                this.chasingEnemies.get(enemyX, enemyY);
+            }
+        }
+
+        // Spawn Shooting Enemies
+        if (this.levelId >= 15) {
+            const numShooting = Math.min(Math.floor((this.levelId - 14) / 2), 2); // Max 2
+            for (let i = 0; i < numShooting && spotIndex < floorSpots.length; i++, spotIndex++) {
+                const spot = floorSpots[spotIndex];
+                if (Phaser.Math.Distance.Between(spot.x, spot.y, this.player.x / tileSize, this.player.y / tileSize) < 8) continue;
+                const enemyX = spot.x * tileSize + tileSize / 2;
+                const enemyY = spot.y * tileSize + tileSize / 2;
+                const shootingEnemy = new ShootingEnemy(this, enemyX, enemyY, this.projectiles);
+                this.shootingEnemies.add(shootingEnemy);
+            }
         }
     }
 
     hitEnemy(player, enemy) {
+        // If the object hit is a projectile, disable it
+        if (enemy instanceof Projectile) {
+            enemy.setActive(false);
+            enemy.setVisible(false);
+        }
         this.onTimerExpired(); // Reuse game over logic
     }
 
