@@ -40,6 +40,28 @@ export class MainMenu extends Phaser.Scene {
             fontStyle: 'bold',
         }).setAngle(-10);
 
+        // Inventory Display
+        const inventory = this.registry.get('inventory') || [];
+        const inventoryWrapper = document.createElement('div');
+        inventoryWrapper.id = 'inventory-wrapper';
+        document.body.appendChild(inventoryWrapper);
+
+        let inventoryHTML = '<h3>Inventory</h3>';
+        if (inventory.length === 0) {
+            inventoryHTML += '<p>No items yet!</p>';
+        } else {
+            inventoryHTML += '<ul>';
+            inventory.forEach(entry => {
+                let itemName = entry.item.name;
+                if (itemName && itemName.toLowerCase() === 'bomb') itemName = '💣 Bomb';
+                if (itemName && itemName.toLowerCase() === 'wall') itemName = '🧱 Wall';
+                inventoryHTML += `<li>${itemName} x ${entry.quantity}</li>`;
+            });
+            inventoryHTML += '</ul>';
+        }
+        inventoryWrapper.innerHTML = inventoryHTML;
+
+
         // Wrapper div for buttons
         const wrapper = document.createElement('div');
         wrapper.id = 'menu-wrapper';
@@ -94,6 +116,36 @@ export class MainMenu extends Phaser.Scene {
                 height: 24px;
             }
 
+            #inventory-wrapper {
+                position: absolute;
+                top: 100px;
+                left: 20px;
+                padding: 15px;
+                background: #f0f0f0;
+                border: 2px solid #000;
+                border-radius: 10px;
+                width: 250px;
+                font-family: Arial, sans-serif;
+            }
+
+            #inventory-wrapper h3 {
+                margin: 0 0 10px 0;
+                padding-bottom: 5px;
+                border-bottom: 1px solid #ccc;
+                font-size: 20px;
+            }
+
+            #inventory-wrapper ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            #inventory-wrapper li {
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+
         `;
         document.head.appendChild(style);
 
@@ -130,10 +182,12 @@ export class MainMenu extends Phaser.Scene {
             this.registry.remove('user');
             this.registry.remove('token');
             wrapper.remove(); // Remove UI
+            inventoryWrapper.remove();
             this.scene.start('Login');
         };
         this.events.on('shutdown', () => {
             document.getElementById('menu-wrapper')?.remove();
+            document.getElementById('inventory-wrapper')?.remove();
         });
     }
 

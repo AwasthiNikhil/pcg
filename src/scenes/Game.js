@@ -4,6 +4,9 @@ import { ShootingEnemy } from '../gameObjects/ShootingEnemy.js';
 import { ChasingEnemy } from '../gameObjects/ChasingEnemy.js';
 import { Projectile } from '../gameObjects/Projectile.js';
 
+const BOMB_ITEM_ID = 3; // From temp.txt output
+const WALL_ITEM_ID = 2; // From temp.txt output
+
 export class Game extends Phaser.Scene {
     constructor() {
         super('Game');
@@ -22,6 +25,15 @@ export class Game extends Phaser.Scene {
             volume: this.userSettings.music_volume / 100
         });
         this.ingame_sound.play();
+
+        // Inventory tracking
+        this.spentResources = {}; // { item_id: quantity_spent }
+        this.playerInventory = {}; // { item_id: current_quantity }
+
+        const inventoryFromRegistry = this.registry.get('inventory') || [];
+        inventoryFromRegistry.forEach(entry => {
+            this.playerInventory[entry.item.id] = entry.quantity;
+        });
 
         const grid = this.levelData.grid;
         const tileSize = 128;
@@ -198,6 +210,8 @@ export class Game extends Phaser.Scene {
             this.scene.launch('PauseMenu'); // Launch pause menu scene
         });
 
+        this.events.on('shutdown', this.shutdown, this); // Add shutdown listener
+
         // --- Enemy Setup ---
         this.patrollingEnemies = this.physics.add.group({ classType: PatrollingEnemy, runChildUpdate: true });
         this.shootingEnemies = this.physics.add.group({ classType: ShootingEnemy, runChildUpdate: true });
@@ -304,7 +318,7 @@ export class Game extends Phaser.Scene {
         this.key_suound.play();
 
     }
-    onLevelComplete() {
+    async onLevelComplete() {
         if (!this.hasKey) {
             // Optional: give feedback
             const msg = this.add.text(this.scale.width / 2, this.scale.height / 2 - 100, 'You need the key!', {
@@ -319,6 +333,8 @@ export class Game extends Phaser.Scene {
         }
 
         if (this.timerEvent) this.timerEvent.remove();
+
+        this.sendSpentResourcesToBackend(); // Send spent items to backend (non-blocking)
 
         this.scene.start('LevelComplete', {
             levelId: this.levelId,
@@ -345,14 +361,17 @@ export class Game extends Phaser.Scene {
         }
         return await response.json(); // optional: use returned score data
     }
-    onTimerExpired() {
+    async onTimerExpired() {
         try {
-            this.addPlayerCoins(this.coinsCollected);
-            console.log("Coins added successfully.", this.coinsCollected); //TODO: scores check later
+            this.addPlayerCoins(this.coinsCollected); // Call without await
+            console.log("Coins added successfully.", this.coinsCollected);
         } catch (error) {
             console.error("Failed to add coins:", error);
-            this.showErrorMessage("Error addin coins.");
+            this.showToast("Error adding coins.", 'error'); // Changed to showToast
         }
+        
+        this.sendSpentResourcesToBackend(); // Send spent items to backend (non-blocking)
+
         // Disable player controls or physics
         this.player.setVelocity(0, 0);
         this.player.body.enable = false;
@@ -439,68 +458,179 @@ export class Game extends Phaser.Scene {
             msg.destroy();
         });
     }
-    placeWall() {
-        const tileSize = 128;
-        const playerTileX = Math.floor(this.player.x / tileSize);
-        const playerTileY = Math.floor(this.player.y / tileSize);
+    playerPlaceWall() {
+        if (this.canUseItem(WALL_ITEM_ID)) {
+            this.useItem(WALL_ITEM_ID);
+            const tileSize = 128;
+            const playerTileX = Math.floor(this.player.x / tileSize);
+            const playerTileY = Math.floor(this.player.y / tileSize);
 
-        // Offset based on player facing direction
-        const dx = this.player.lastDirection === 'left' ? -1 : 1;
-        const targetX = playerTileX + dx;
-        const targetY = playerTileY;
+            const dx = this.player.lastDirection === 'left' ? -1 : 1;
+            const targetX = playerTileX + dx;
+            const targetY = playerTileY;
 
-        // Bounds check
-        const grid = this.levelData.grid;
-        if (
-            targetX < 0 || targetX >= grid[0].length ||
-            targetY < 0 || targetY >= grid.length
-        ) return;
+            const grid = this.levelData.grid;
+            if (
+                targetX < 0 || targetX >= grid[0].length ||
+                targetY < 0 || targetY >= grid.length ||
+                grid[targetY][targetX] === "2"
+            ) {
+                this.returnItem(WALL_ITEM_ID);
+                this.showToast('Cannot place wall here!', 'error');
+                return;
+            }
 
-        // Prevent placing on existing walls or other obstacles
-        if (grid[targetY][targetX] === "2") return;
-
-        // Update grid
-        grid[targetY][targetX] = "2";
-
-        // Create the wall in the scene
-        const wall = this.walls.create(targetX * tileSize + tileSize / 2, targetY * tileSize + tileSize / 2, 'wall');
-        wall.setOrigin(0.5);
-        wall.refreshBody();
-        wall.tileX = targetX;
-        wall.tileY = targetY;
+            grid[targetY][targetX] = "2";
+            const wall = this.walls.create(targetX * tileSize + tileSize / 2, targetY * tileSize + tileSize / 2, 'wall');
+            wall.setOrigin(0.5);
+            wall.refreshBody();
+            wall.tileX = targetX;
+            wall.tileY = targetY;
+        } else {
+            this.showToast('No walls left!', 'error');
+        }
     }
-    placeWallBelow() {
-        const tileSize = 128;
-        const playerTileX = Math.floor(this.player.x / tileSize);
-        const playerTileY = Math.floor(this.player.y / tileSize);
+    playerPlaceWallBelow() {
+        if (this.canUseItem(WALL_ITEM_ID)) {
+            this.useItem(WALL_ITEM_ID);
+            const tileSize = 128;
+            const playerTileX = Math.floor(this.player.x / tileSize);
+            const playerTileY = Math.floor(this.player.y / tileSize);
 
-        const targetX = playerTileX;
-        const targetY = playerTileY + 1; // One tile below the player
+            const targetX = playerTileX;
+            const targetY = playerTileY + 1;
 
-        const grid = this.levelData.grid;
+            const grid = this.levelData.grid;
 
-        // Bounds check
-        if (
-            targetX < 0 || targetX >= grid[0].length ||
-            targetY < 0 || targetY >= grid.length
-        ) return;
+            if (
+                targetX < 0 || targetX >= grid[0].length ||
+                targetY < 0 || targetY >= grid.length ||
+                grid[targetY][targetX] === "2"
+            ) {
+                this.returnItem(WALL_ITEM_ID);
+                this.showToast('Cannot place wall here!', 'error');
+                return;
+            }
 
-        // Prevent placing on existing walls or other obstacles
-        if (grid[targetY][targetX] === "2") return;
+            grid[targetY][targetX] = "2";
+            const wall = this.walls.create(
+                targetX * tileSize + tileSize / 2,
+                targetY * tileSize + tileSize / 2,
+                'wall'
+            );
+            wall.setOrigin(0.5);
+            wall.refreshBody();
+            wall.tileX = targetX;
+            wall.tileY = targetY;
+        } else {
+            this.showToast('No walls left!', 'error');
+        }
+    }
 
-        // Update grid
-        grid[targetY][targetX] = "2";
+    playerShootBomb() {
+        if (this.canUseItem(BOMB_ITEM_ID)) {
+            this.useItem(BOMB_ITEM_ID);
+            this.player.shootBomb(); // Call the actual player method
+        } else {
+            this.showToast('No bombs left!', 'error');
+        }
+    }
 
-        // Create the wall in the scene
-        const wall = this.walls.create(
-            targetX * tileSize + tileSize / 2,
-            targetY * tileSize + tileSize / 2,
-            'wall'
-        );
-        wall.setOrigin(0.5);
-        wall.refreshBody();
-        wall.tileX = targetX;
-        wall.tileY = targetY;
+    canUseItem(itemId) {
+        return (this.playerInventory[itemId] && this.playerInventory[itemId] > 0);
+    }
+
+    useItem(itemId) {
+        if (this.playerInventory[itemId] > 0) {
+            this.playerInventory[itemId]--;
+            this.spentResources[itemId] = (this.spentResources[itemId] || 0) + 1;
+            // Optional: Update a HUD element for item count
+            return true;
+        }
+        return false;
+    }
+
+    returnItem(itemId) {
+        this.playerInventory[itemId]++;
+        this.spentResources[itemId]--;
+    }
+
+    async sendSpentResourcesToBackend() {
+        const token = this.registry.get('token');
+        if (!token || Object.keys(this.spentResources).length === 0) {
+            return; // No token or no items spent
+        }
+
+        const spentItemsPayload = Object.keys(this.spentResources).map(itemId => ({
+            item_id: parseInt(itemId),
+            quantity: this.spentResources[itemId]
+        }));
+
+        try {
+            const response = await fetch('http://pcg.test/api/inventory/spend', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ spent_items: spentItemsPayload })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to deduct spent items:', errorData.message);
+                // Optionally show a toast
+            } else {
+                console.log('Spent items deducted successfully.');
+                // Re-fetch and update registry inventory
+                const updatedInventory = await this.fetchUserInventory(token);
+                this.registry.set('inventory', updatedInventory);
+            }
+        } catch (error) {
+            console.error('Error sending spent items to backend:', error);
+        }
+    }
+
+    async fetchUserInventory(token) {
+        try {
+            const response = await fetch('http://pcg.test/api/inventory', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                return await response.json();
+            } else {
+                console.error('Failed to fetch inventory:', response.statusText);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+            return [];
+        }
+    }
+
+    showToast(message, type = 'info') {
+        document.getElementById('toast-wrapper')?.remove();
+
+        const toastWrapper = document.createElement('div');
+        toastWrapper.id = 'toast-wrapper';
+        toastWrapper.className = `toast-${type}`;
+        toastWrapper.textContent = message;
+
+        document.body.appendChild(toastWrapper);
+
+        setTimeout(() => {
+            toastWrapper.classList.add('visible');
+        }, 10);
+
+        setTimeout(() => {
+            toastWrapper.classList.remove('visible');
+            toastWrapper.addEventListener('transitionend', () => toastWrapper.remove());
+        }, 3000);
     }
 
     handleBombCollision = (bomb, wall) => {
@@ -560,13 +690,44 @@ export class Game extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(shoot)) {
-            this.player.shootBomb();
+            this.playerShootBomb();
         }
         if (Phaser.Input.Keyboard.JustDown(this.keys.placeWall)) {
-            this.placeWall();
+            this.playerPlaceWall();
         }
         if (Phaser.Input.Keyboard.JustDown(this.keys.placeWallBelow)) {
-            this.placeWallBelow();
+            this.playerPlaceWallBelow();
         }
+    }
+
+    shutdown() {
+        // Stop all sounds specific to this scene
+        if (this.ingame_sound) {
+            this.ingame_sound.stop();
+            this.ingame_sound.destroy();
+        }
+        if (this.coin_sound) this.coin_sound.destroy();
+        if (this.key_suound) this.key_suound.destroy();
+
+        // Remove DOM elements created by this scene
+        document.getElementById('toast-wrapper')?.remove(); // Ensure toast is removed
+
+        // Destroy Phaser objects that might persist or cause issues
+        if (this.timerEvent) this.timerEvent.remove();
+        this.player.destroy(); // Destroy player and its associated groups (bombs)
+        this.walls.destroy(true);
+        this.floorGroup.destroy(true);
+        this.coinsGroup.destroy(true);
+        if (this.key) this.key.destroy();
+        if (this.exitZone) this.exitZone.destroy();
+
+        this.patrollingEnemies.destroy(true);
+        this.shootingEnemies.destroy(true);
+        this.chasingEnemies.destroy(true);
+        this.projectiles.destroy(true);
+
+        // Clear any event listeners that might persist
+        this.input.keyboard.off('keydown-ESC');
+        this.events.off('shutdown', this.shutdown, this);
     }
 }

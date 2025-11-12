@@ -90,13 +90,4 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.lastShot = now;
     }
-
-    // Add this method to handle collision and remove bombs correctly
-    handleBombCollision(bomb, wall) {
-        bomb.setActive(false).setVisible(false); // Make bomb disappear immediately
-        bomb.body.setVelocity(0, 0); // Stop movement of the bomb
-        bomb.disableBody(true, true); // Disable the body (and remove it from physics)
-
-        // Add custom logic for wall destruction here (e.g., destroying 2x2 tiles)
-    }
 }

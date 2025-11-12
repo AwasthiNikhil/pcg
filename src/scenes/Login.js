@@ -153,6 +153,8 @@ export class Login extends Phaser.Scene {
 
                 // Fetch user settings using token
                 const settings = await this.fetchUserSettings(token);
+                const inventory = await this.fetchUserInventory(token);
+
                 if (!settings) {
                     this.showErrorMessage('Failed to load user settings.');
                     return;
@@ -162,6 +164,7 @@ export class Login extends Phaser.Scene {
                 this.registry.set('user', data.user);
                 this.registry.set('token', token);
                 this.registry.set('userSettings', settings);
+                this.registry.set('inventory', inventory);
 
                 this.scene.start('MainMenu');
             } else {
@@ -190,6 +193,8 @@ export class Login extends Phaser.Scene {
 
                 // Fetch user settings using token
                 const settings = await this.fetchUserSettings(token);
+                const inventory = await this.fetchUserInventory(token);
+                
                 if (!settings) {
                     this.showErrorMessage('Failed to load user settings.');
                     return;
@@ -199,6 +204,8 @@ export class Login extends Phaser.Scene {
                 this.registry.set('user', data.user);
                 this.registry.set('token', token);
                 this.registry.set('userSettings', settings);
+                this.registry.set('inventory', inventory);
+
 
                 this.scene.start('MainMenu');
             } else {
@@ -231,6 +238,29 @@ export class Login extends Phaser.Scene {
             return null;
         } finally {
             LoadingSpinner.hide();
+        }
+    }
+
+    async fetchUserInventory(token) {
+        try {
+            const response = await fetch('http://pcg.test/api/inventory', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const inventoryData = await response.json();
+                console.log('Fetched inventory from /api/inventory (Login.js):', inventoryData); // Debug log
+                return inventoryData;
+            } else {
+                console.error('Failed to fetch inventory:', response.statusText);
+                return [];
+            }
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+            return [];
         }
     }
 

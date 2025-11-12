@@ -1,0 +1,38 @@
+[
+    {
+        "id": 6,
+        "user_id": 25,
+        "item_id": 2,
+        "quantity": 8,
+        "item": {
+            "id": 2,
+            "name": "Wall",
+            "type": "item",
+            "description": "(Pack of 5)\r\nUse ingame to place walls. Make or block ways, up to you.",
+            "price": 40,
+            "rarity": 50,
+            "image_path": null,
+            "created_at": "2025-11-12T02:22:24.000000Z",
+            "updated_at": "2025-11-12T02:22:24.000000Z",
+            "deleted_at": null
+        }
+    },
+    {
+        "id": 7,
+        "user_id": 25,
+        "item_id": 3,
+        "quantity": 1,
+        "item": {
+            "id": 3,
+            "name": "Bomb",
+            "type": "item",
+            "description": "(Pack of 5)\r\nUse ingame to destory walls or enemies.",
+            "price": 40,
+            "rarity": 50,
+            "image_path": null,
+            "created_at": "2025-11-12T02:22:24.000000Z",
+            "updated_at": "2025-11-12T02:22:24.000000Z",
+            "deleted_at": null
+        }
+    }
+]
