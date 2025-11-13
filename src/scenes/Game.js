@@ -17,6 +17,7 @@ export class Game extends Phaser.Scene {
     }
     create() {
 
+        this.levelEnded = false;
         this.userSettings = this.registry.get('userSettings');
 
         this.sound.pauseAll();
@@ -314,7 +315,7 @@ export class Game extends Phaser.Scene {
             enemy.setActive(false);
             enemy.setVisible(false);
         }
-        this.onTimerExpired(); // Reuse game over logic
+        this.endLevel(false);
     }
 
     collectKey(player, key) {
@@ -329,7 +330,8 @@ export class Game extends Phaser.Scene {
         this.key_suound.play();
 
     }
-    async onLevelComplete() {
+
+    onLevelComplete() {
         if (!this.hasKey) {
             // Optional: give feedback
             const msg = this.add.text(this.scale.width / 2, this.scale.height / 2 - 100, 'You need the key!', {
@@ -342,19 +344,9 @@ export class Game extends Phaser.Scene {
             this.time.delayedCall(1500, () => msg.destroy());
             return;
         }
-
-        if (this.timerEvent) this.timerEvent.remove();
-
-        this.sendSpentResourcesToBackend(); // Send spent items to backend (non-blocking)
-
-        this.scene.start('LevelComplete', {
-            levelId: this.levelId,
-            levelData: this.levelData,
-            coinsCollected: this.coinsCollected,
-            totalCoins: this.totalCoins,
-            remainingTime: this.remainingTime,
-        });
+        this.endLevel(true);
     }
+
     async addPlayerCoins(coins) {
         const response = await fetch('http://pcg.test/api/addCoin', {
             method: 'POST',
@@ -372,54 +364,86 @@ export class Game extends Phaser.Scene {
         }
         return await response.json(); // optional: use returned score data
     }
-    async onTimerExpired() {
-        try {
-            this.addPlayerCoins(this.coinsCollected); // Call without await
-            console.log("Coins added successfully.", this.coinsCollected);
-        } catch (error) {
-            console.error("Failed to add coins:", error);
-            this.showToast("Error adding coins.", 'error'); // Changed to showToast
-        }
-        
-        this.sendSpentResourcesToBackend(); // Send spent items to backend (non-blocking)
 
-        // Disable player controls or physics
+    onTimerExpired() {
+        this.endLevel(false);
+    }
+
+    async endLevel(isComplete) {
+        if (this.levelEnded) {
+            return; // Prevent multiple executions
+        }
+        this.levelEnded = true;
+
+        // Stop timer and player
+        if (this.timerEvent) {
+            this.timerEvent.remove();
+        }
         this.player.setVelocity(0, 0);
         this.player.body.enable = false;
 
-        // Fade camera or dark overlay
-        const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7)
-            .setOrigin(0).setScrollFactor(0).setDepth(100);
+        // --- Backend and Registry Updates ---
+        try {
+            // This runs for both win and lose scenarios
+            if (this.coinsCollected > 0) {
+                await this.addPlayerCoins(this.coinsCollected);
+            }
+            
+            // Update registry regardless of backend success for immediate UI feedback
+            const user = this.registry.get('user');
+            if (user) {
+                user.coins += this.coinsCollected;
+                this.registry.set('user', user);
+            }
 
-        this.add.text(this.scale.width / 2, this.scale.height / 2 - 50, 'Game Over', {
-            fontSize: '48px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
+            await this.sendSpentResourcesToBackend();
 
-        const buttonStyle = {
-            fontSize: '28px',
-            fill: '#fff',
-            backgroundColor: '#444',
-            padding: { x: 20, y: 10 }
-        };
+        } catch (error) {
+            console.error("API Error on level end:", error);
+            this.showToast("Error saving progress.", 'error');
+        }
 
-        const retryBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 30, 'Retry Level', buttonStyle)
-            .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
-        retryBtn.on('pointerdown', () => {
-            this.scene.restart({
+        // --- Scene Transition or Game Over UI ---
+        if (isComplete) {
+            this.scene.start('LevelComplete', {
                 levelId: this.levelId,
-                levelData: this.levelData
+                levelData: this.levelData,
+                coinsCollected: this.coinsCollected,
+                totalCoins: this.totalCoins,
+                remainingTime: this.remainingTime,
             });
-        });
+        } else {
+            // Display Game Over screen
+            const overlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7)
+                .setOrigin(0).setScrollFactor(0).setDepth(100);
 
-        const menuBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 80, 'Main Menu', buttonStyle)
-            .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
-        menuBtn.on('pointerdown', () => {
-            this.scene.start('MainMenu');
-        });
+            this.add.text(this.scale.width / 2, this.scale.height / 2 - 50, 'Game Over', {
+                fontSize: '48px',
+                fill: '#ffffff'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
 
-        // Stop timer if still running
-        if (this.timerEvent) this.timerEvent.remove();
+            const buttonStyle = {
+                fontSize: '28px',
+                fill: '#fff',
+                backgroundColor: '#444',
+                padding: { x: 20, y: 10 }
+            };
+
+            const retryBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 30, 'Retry Level', buttonStyle)
+                .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
+            retryBtn.on('pointerdown', () => {
+                this.scene.restart({
+                    levelId: this.levelId,
+                    levelData: this.levelData
+                });
+            });
+
+            const menuBtn = this.add.text(this.scale.width / 2, this.scale.height / 2 + 80, 'Main Menu', buttonStyle)
+                .setOrigin(0.5).setInteractive().setScrollFactor(0).setDepth(101);
+            menuBtn.on('pointerdown', () => {
+                this.scene.start('MainMenu');
+            });
+        }
     }
     findValid2x2Spots(grid, floorValue = "1") {
         const positions = [];
