@@ -174,6 +174,17 @@ export class Game extends Phaser.Scene {
             fill: '#ffff00'
         }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
 
+        this.bombText = this.add.text(barX, barY + barHeight + 60, ``, {
+            fontSize: '18px',
+            fill: '#ffffff'
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
+
+        this.wallText = this.add.text(barX, barY + barHeight + 85, ``, {
+            fontSize: '18px',
+            fill: '#ffffff'
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
+        this.updateInventoryDisplay();
+
         // coins
         this.coinsCollected = 0;
         this.totalCoins = 3 + this.levelId;
@@ -544,7 +555,7 @@ export class Game extends Phaser.Scene {
         if (this.playerInventory[itemId] > 0) {
             this.playerInventory[itemId]--;
             this.spentResources[itemId] = (this.spentResources[itemId] || 0) + 1;
-            // Optional: Update a HUD element for item count
+            this.updateInventoryDisplay(); // Update HUD
             return true;
         }
         return false;
@@ -553,6 +564,12 @@ export class Game extends Phaser.Scene {
     returnItem(itemId) {
         this.playerInventory[itemId]++;
         this.spentResources[itemId]--;
+        this.updateInventoryDisplay(); // Update HUD
+    }
+
+    updateInventoryDisplay() {
+        this.bombText.setText(`💣 Bombs: ${this.playerInventory[BOMB_ITEM_ID] || 0}`);
+        this.wallText.setText(`🧱 Walls: ${this.playerInventory[WALL_ITEM_ID] || 0}`);
     }
 
     async sendSpentResourcesToBackend() {

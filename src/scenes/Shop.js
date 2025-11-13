@@ -49,6 +49,8 @@ export class Shop extends Phaser.Scene {
         this.updateShopUI(); // Initial UI update
 
         this.activateTab('powerups'); // Load default tab
+
+        this.events.on('shutdown', this.cleanupDOM, this);
     }
 
     async fetchPowerUps() {
