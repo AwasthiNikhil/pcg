@@ -7,10 +7,9 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.body.reset(x, y);
         this.setActive(true);
         this.setVisible(true);
+        this.body.setAllowGravity(false); // shots fly straight
         this.setVelocity(velocityX, velocityY);
-
-        // Set a random lifespan between 700ms and 1500ms
-        this.lifespan = Phaser.Math.Between(700, 1500);
+        this.lifespan = 2400;
     }
 
     preUpdate(time, delta) {
