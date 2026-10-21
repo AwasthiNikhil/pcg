@@ -132,6 +132,12 @@ export class Game extends Phaser.Scene {
         const barX = 20;
         const barY = 20;
 
+        // Backing panel so the HUD stays readable over white floor tiles
+        this.hudPanel = this.add.rectangle(barX - 10, barY - 10, 310, 142, 0x000000, 0.8)
+            .setOrigin(0, 0)
+            .setScrollFactor(0)
+            .setDepth(99);
+
         // Full background bar (gray)
         this.timeBarBackground = this.add.rectangle(barX, barY, barWidth, barHeight, 0x444444)
             .setOrigin(0, 0)
