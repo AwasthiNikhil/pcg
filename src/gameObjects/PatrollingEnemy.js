@@ -11,7 +11,7 @@ export class PatrollingEnemy extends Enemy {
     }
 
     setup() {
-        this.setCollideWorldBounds(true).setGravityY(500).setImmovable(true);
+        this.setCollideWorldBounds(true).setGravityY(500);
     }
 
     update(time) {

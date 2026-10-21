@@ -10,7 +10,6 @@ export class Dropper extends Enemy {
 
     setup() {
         this.body.setAllowGravity(false);
-        this.setImmovable(true);
     }
 
     update(time) {

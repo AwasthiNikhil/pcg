@@ -11,7 +11,6 @@ export class Mimic extends Enemy {
 
     setup() {
         this.body.setAllowGravity(false);
-        this.setImmovable(true);
         this.body.setSize(44, 44);
         // idle like a real coin
         this.idle = this.scene.tweens.add({ targets: this, scaleX: 0.9, duration: 700, yoyo: true, repeat: -1 });

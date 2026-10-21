@@ -13,7 +13,7 @@ export class Bat extends Enemy {
 
     setup() {
         this.body.setAllowGravity(false);
-        this.setCollideWorldBounds(true).setImmovable(true);
+        this.setCollideWorldBounds(true);
         this.body.setSize(60, 34);
     }
 

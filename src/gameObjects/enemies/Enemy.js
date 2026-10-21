@@ -26,6 +26,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Body settings go here: adding a sprite to a physics group resets them.
+    // Don't make moving enemies immovable: Arcade physics never separates two
+    // immovable bodies, and walls are static, so they'd sink through floors.
     setup() {}
 
     solidAt(x, y) {
