@@ -1,8 +1,9 @@
 # Lucky You
 
-A 2D tile game in which every level is procedurally generated. Grab the key,
-collect coins and reach the exit before the timer runs out. As you progress,
-each level is built by a different algorithm.
+A fast 2D platformer in which every level is procedurally generated. Grab the
+key, collect coins and reach the exit before the clock runs out. As you
+progress, each level is built by a different algorithm, and new enemies and
+hazards turn up without warning.
 
 This repo is the web client (Phaser 3 + Vite). It is one of three repos:
 
@@ -10,7 +11,7 @@ This repo is the web client (Phaser 3 + Vite). It is one of three repos:
 |---|---|
 | **pcg** (this one) | The game client |
 | [PCG-for-game-levels-generation](https://github.com/AwasthiNikhil/PCG-for-game-levels-generation) | Level generators and the Flask API |
-| [pcg-db](https://github.com/AwasthiNikhil/pcg-db) | Accounts, scores, shop and the admin dashboard (Laravel 13) |
+| [pcg-db](https://github.com/AwasthiNikhil/pcg-db) | Accounts, scores, shop, skins and the admin dashboard (Laravel 13) |
 
 ## Run it
 
@@ -32,25 +33,42 @@ To point it somewhere else, set them in a `.env` file next to `package.json`.
 
 `npm run build` writes a static build to `dist/`.
 
+Once you've signed in you stay signed in, even across refreshes and browser
+restarts, until you sign out. The token is kept in `localStorage`.
+
 ## Controls
 
-These are the defaults. You can rebind them in Settings.
+These are the defaults. You can rebind any of them in Settings, and the How to
+play screen always shows your current keys.
 
 | Key | Action |
 |---|---|
 | A / D | Move left / right |
-| W | Jump |
+| W | Jump. Press again in the air to double jump; jump off a wall to wall jump |
+| Shift | Dash. Breaks walls and kills enemies in your path |
+| S, S | Dash down, breaking the block you land on |
 | Space | Throw a bomb (clears 2×2 walls) |
-| E | Place a wall block |
-| S | Place a wall block below you |
+| E / Q | Place a wall block ahead of you / below you |
 | Esc | Pause |
 
-Bombs and wall blocks are bought in the shop with the coins you collect.
+Blocks broken by a dash drop as pickups that refill your walls.
 
-## Levels
+In the menus, W/S or the arrow keys move between options, Enter selects, and Esc
+goes back to the main menu.
 
-`src/levels.js` decides which generator builds each level. It also scales the
-grid size and generator settings as the level number goes up:
+## How a level plays
+
+- Each coin adds 2 seconds to the clock. Coins or kills less than 2.5 seconds
+  apart build a combo.
+- Under 10 seconds left the music speeds up. An arrow at the screen edge points
+  to the key, then to the exit.
+- From level 6, single-tile lava pools appear. A jump or a dash always gets you
+  across.
+
+### Levels
+
+`src/levels.js` decides which generator builds each level. It also grows the
+grid and adjusts the generator settings as the level number goes up:
 
 | Levels | Generator |
 |---|---|
@@ -60,14 +78,79 @@ grid size and generator settings as the level number goes up:
 | 7–8 | Perlin noise |
 | 9 and up | Transformer model |
 
+### Enemies
+
+The in-game How to play screen doesn't list enemies on purpose: new ones turn
+up unannounced. Every enemy gets a little faster each level, up to +50%.
+
+| From level | Enemy | Behaviour |
+|---|---|---|
+| 2 | Crawler | Patrols its platform and turns at ledges and walls |
+| 4 | Cannon | Sits on the floor, aims its barrel at you, flashes before firing, and leads its shots. Fires a 3-shot spread from level 12 |
+| 5 | Bat | Hovers, winds up, then dives at you |
+| 7 | Hunter | Patrols until it sees you, then chases: hops steps and follows you down ledges |
+| 9 | Icicle | Hangs from ceilings and drops when you pass under it |
+| 12 | Mimic | Looks like a coin until you get close |
+| 15 | Phantom | Drifts through walls toward you |
+
+Dashes and bombs kill every enemy type.
+
+## Scoring and coins
+
+`src/scoring.js` scores each cleared level:
+
+```
+(100 + 25 per coin + 30 per enemy + 10 per second left
+ + 25 × best combo + 100 for every coin) × (1 + 0.1 × (level − 1))
+```
+
+The level-complete screen shows the breakdown. The leaderboard adds up each
+player's best score per level, so replaying a level can only raise it.
+
+Coins you pick up pay out ×10 when you clear the level and ×5 when you don't.
+The server rejects scores above the maximum possible for a level (see
+`app/Support/Scoring.php` in pcg-db). Keep the two files in sync.
+
+## Characters, skins and perks
+
+Characters are free to switch. Skins are bought in the Shop. You change both in
+the Locker. Perks are defined in `src/perks.js` and apply in game.
+
+| | Perk | Drawback |
+|---|---|---|
+| Rookie | None | None |
+| Warrior | Shrugs off one hit each level | 5% slower |
+| Mage | Dash recharges 40% faster | None |
+| Archer | A free bomb every level | None |
+| Golden skin | Coins pay out 20% more | None |
+| Frost skin | 15% faster, jumps higher | None |
+| Ember skin | Walks on lava | 5% slower |
+| Shadow skin | Enemies only notice you up close | 10% slower |
+
+## Interface
+
+The menus are HTML layered over the canvas. They share one design system:
+
+- `src/ui/ui.css` holds the tokens and components.
+- `src/ui/dom.js` holds helpers for mounting screens, toasts, icons, Esc and
+  keyboard focus, tabs, and the generated backdrop behind every menu.
+
+Colours come from the game world: ink walls, paper floors, gold coins. The
+fonts are Unbounded for display and Archivo for interface text.
+
 ## Code map
 
 | Path | Contents |
 |---|---|
 | `src/main.js` | Phaser config and the scene list |
 | `src/config.js` | Backend URLs |
+| `src/api.js`, `src/session.js` | API requests; staying signed in |
 | `src/levels.js` | Level progression and the generator request |
-| `src/scenes/` | Login, Register, MainMenu, Game, LevelComplete, Shop, Settings, Leaderboard, Help, Pause, GameOver |
-| `src/gameObjects/` | Player, enemies and projectiles |
-| `public/assets/` | Sprites, audio and fonts |
+| `src/scoring.js` | Level score and coin payout |
+| `src/perks.js` | Characters, skin perks and the combined loadout |
+| `src/scenes/` | Login, Register, MainMenu, Game, LevelComplete, Shop, Locker, Settings, Leaderboard, Help, PauseMenu |
+| `src/gameObjects/` | Player, projectiles, and the crawler, cannon and hunter |
+| `src/gameObjects/enemies/` | Enemy base class and line of sight; bat, icicle, mimic, phantom |
+| `src/ui/` | Design system and interface helpers |
+| `public/assets/` | Sprites, audio, avatars and flags |
 | `public/phaser.js` | Phaser, loaded as a global script |
