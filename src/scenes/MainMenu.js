@@ -1,3 +1,4 @@
+import { API_URL, GENERATOR_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class MainMenu extends Phaser.Scene {
@@ -201,7 +202,7 @@ export class MainMenu extends Phaser.Scene {
         LoadingSpinner.show("See ya player...");
 
         try {
-            const response = await fetch('http://pcg.test/api/logout', {
+            const response = await fetch(`${API_URL}/logout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -222,7 +223,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     async getNextLevel(token) {
-        const response = await fetch('http://pcg.test/api/scores', {
+        const response = await fetch(`${API_URL}/scores`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -251,7 +252,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     async fetchLevelData(algorithmId, levelId) {
-        const baseUrl = `http://localhost:5000/generate/${algorithmId}`;
+        const baseUrl = `${GENERATOR_URL}/generate/${algorithmId}`;
         const params = new URLSearchParams({
             x: (20 + 2*Math.floor(levelId / 2)).toString(),
             y: (15 + Math.floor(levelId / 2)).toString(),

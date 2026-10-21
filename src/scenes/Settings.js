@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class Settings extends Phaser.Scene {
@@ -127,7 +128,7 @@ export class Settings extends Phaser.Scene {
         LoadingSpinner.show("Saving user settings.");
 
         try {
-            const res = await fetch('http://pcg.test/api/settings', {
+            const res = await fetch(`${API_URL}/settings`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -169,7 +170,7 @@ export class Settings extends Phaser.Scene {
 
         try{
             LoadingSpinner.show("Changing password...");
-            const response = await  fetch('http://pcg.test/api/change-password', {
+            const response = await  fetch(`${API_URL}/change-password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

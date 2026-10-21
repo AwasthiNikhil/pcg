@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class Login extends Phaser.Scene {
@@ -141,7 +142,7 @@ export class Login extends Phaser.Scene {
     async login(username, password, wrapper) {
         LoadingSpinner.show("Logging you in...");
         try {
-            const response = await fetch('http://pcg.test/api/login', {
+            const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -181,7 +182,7 @@ export class Login extends Phaser.Scene {
     async register(username, password, wrapper) {
         LoadingSpinner.show("Registering user info...");
         try {
-            const response = await fetch('http://pcg.test/api/register', {
+            const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -221,7 +222,7 @@ export class Login extends Phaser.Scene {
     async fetchUserSettings(token) {
         LoadingSpinner.show("Saving settings...");
         try {
-            const response = await fetch('http://pcg.test/api/settings', {
+            const response = await fetch(`${API_URL}/settings`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -243,7 +244,7 @@ export class Login extends Phaser.Scene {
 
     async fetchUserInventory(token) {
         try {
-            const response = await fetch('http://pcg.test/api/inventory', {
+            const response = await fetch(`${API_URL}/inventory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'

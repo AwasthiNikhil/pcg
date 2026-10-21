@@ -1,3 +1,4 @@
+import { API_URL, GENERATOR_URL } from '../config.js';
 import {LoadingSpinner} from '../components/LoadingSpinner.js';
 
 export class LevelComplete extends Phaser.Scene {
@@ -86,7 +87,7 @@ export class LevelComplete extends Phaser.Scene {
         }).setOrigin(0.5);
     }
     async submitScore(levelId, score) {
-        const response = await fetch('http://pcg.test/api/scores', {
+        const response = await fetch(`${API_URL}/scores`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ export class LevelComplete extends Phaser.Scene {
         return await response.json(); // optional: use returned score data
     }
     async addPlayerCoins(coins) {
-        const response = await fetch('http://pcg.test/api/addCoin', {
+        const response = await fetch(`${API_URL}/addCoin`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ export class LevelComplete extends Phaser.Scene {
 
     // Fetch level data dynamically
     async fetchLevelData(algorithmId, levelId) {
-        const baseUrl = `http://localhost:5000/generate/${algorithmId}`;
+        const baseUrl = `${GENERATOR_URL}/generate/${algorithmId}`;
 
         // Dynamic parameters based on level
         const params = new URLSearchParams({

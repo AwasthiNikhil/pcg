@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class Register extends Phaser.Scene {
@@ -446,7 +447,7 @@ export class Register extends Phaser.Scene {
     async register(username, password, email, country, avatar, wrapper) {
         LoadingSpinner.show("Registering user info...");
         try {
-            const response = await fetch('http://pcg.test/api/register', {
+            const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password, email, country, avatar})
@@ -482,7 +483,7 @@ export class Register extends Phaser.Scene {
     async fetchUserSettings(token) {
         LoadingSpinner.show("Saving settings...");
         try {
-            const response = await fetch('http://pcg.test/api/settings', {
+            const response = await fetch(`${API_URL}/settings`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

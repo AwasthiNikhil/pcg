@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 
 export class Leaderboard extends Phaser.Scene {
     constructor() {
@@ -122,7 +123,7 @@ export class Leaderboard extends Phaser.Scene {
 
 
     async fetchLeaderboard() {
-        const response = await fetch('http://pcg.test/api/leaderboard', {
+        const response = await fetch(`${API_URL}/leaderboard`, {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',

@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 import { Player } from '../gameObjects/Player.js';
 import { PatrollingEnemy } from '../gameObjects/PatrollingEnemy.js';
 import { ShootingEnemy } from '../gameObjects/ShootingEnemy.js';
@@ -187,11 +188,14 @@ export class Game extends Phaser.Scene {
         this.updateInventoryDisplay();
 
         // coins
-        this.coinsCollected = 0;
-        this.totalCoins = 3 + this.levelId;
         this.coinsGroup = this.physics.add.staticGroup();
         const floorSpots = this.findValid2x2Spots(grid); // reuse existing valid floor logic
         Phaser.Utils.Array.Shuffle(floorSpots);
+        this.coinsCollected = 0;
+        // 3 + level coins, but never more than the map has room for, keeping
+        // one spot free for the key; otherwise the level can't be completed.
+        this.totalCoins = Math.max(0, Math.min(3 + this.levelId, floorSpots.length - 1));
+        this.coinText.setText(`Coins: 0 / ${this.totalCoins}`);
         for (let i = 0; i < this.totalCoins && i < floorSpots.length; i++) {
             const spot = floorSpots[i];
             const coinX = spot.x * tileSize + tileSize / 2;
@@ -348,7 +352,7 @@ export class Game extends Phaser.Scene {
     }
 
     async addPlayerCoins(coins) {
-        const response = await fetch('http://pcg.test/api/addCoin', {
+        const response = await fetch(`${API_URL}/addCoin`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -608,7 +612,7 @@ export class Game extends Phaser.Scene {
         }));
 
         try {
-            const response = await fetch('http://pcg.test/api/inventory/spend', {
+            const response = await fetch(`${API_URL}/inventory/spend`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -635,7 +639,7 @@ export class Game extends Phaser.Scene {
 
     async fetchUserInventory(token) {
         try {
-            const response = await fetch('http://pcg.test/api/inventory', {
+            const response = await fetch(`${API_URL}/inventory`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'

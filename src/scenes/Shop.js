@@ -1,3 +1,4 @@
+import { API_URL } from '../config.js';
 export class Shop extends Phaser.Scene {
     constructor() {
         super('Shop');
@@ -61,7 +62,7 @@ export class Shop extends Phaser.Scene {
         }
 
         try {
-            const response = await fetch('http://pcg.test/api/items', {
+            const response = await fetch(`${API_URL}/items`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
@@ -150,7 +151,7 @@ async buyItem(id, price) {
 
     try {
         // Step 1: Subtract coins
-        const subCoinResponse = await fetch('http://pcg.test/api/subCoin', {
+        const subCoinResponse = await fetch(`${API_URL}/subCoin`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -167,7 +168,7 @@ async buyItem(id, price) {
         }
 
         // Step 2: Add item to inventory
-        const addInventoryResponse = await fetch('http://pcg.test/api/inventory', {
+        const addInventoryResponse = await fetch(`${API_URL}/inventory`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -201,7 +202,7 @@ async buyItem(id, price) {
 
 async fetchUserInventory(token) {
     try {
-        const response = await fetch('http://pcg.test/api/inventory', {
+        const response = await fetch(`${API_URL}/inventory`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json'
