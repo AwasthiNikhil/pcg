@@ -69,4 +69,5 @@ grid size and generator settings as the level number goes up:
 | `src/levels.js` | Level progression and the generator request |
 | `src/scenes/` | Login, Register, MainMenu, Game, LevelComplete, Shop, Settings, Leaderboard, Help, Pause, GameOver |
 | `src/gameObjects/` | Player, enemies and projectiles |
-| `assets/` | Sprites, audio and fonts |
+| `public/assets/` | Sprites, audio and fonts |
+| `public/phaser.js` | Phaser, loaded as a global script |
