@@ -21,6 +21,7 @@ export class Register extends Phaser.Scene {
         // wrapper div
         const wrapper = document.createElement('div');
         wrapper.id = 'auth-wrapper';
+        wrapper.classList.add('register');
         document.body.appendChild(wrapper);
 
         wrapper.innerHTML = `
@@ -321,6 +322,13 @@ export class Register extends Phaser.Scene {
                 align-items: center;
                 gap: 20px;
                 font-family: Arial, sans-serif;
+            }
+            /* Register's form is taller than Login's: start it below the
+               title instead of centring it (which pushed it up over the title). */
+            #auth-wrapper.register {
+                top: 22%;
+                transform: translate(-50%, 0);
+                gap: 16px;
             }
             .input-group {
                 position: relative;
