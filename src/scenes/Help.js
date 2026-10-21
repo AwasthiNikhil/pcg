@@ -43,10 +43,11 @@ export class Help extends Phaser.Scene {
                     <br/>
                         Levels are procedurally generated using different algorithms:
                         <ul>
-                            <li>Perlin</li>
-                            <li>Cellular Automata</li>
-                            <li>Graph-based</li>
-                            <li>Transformer model (trained on Lode Runner)</li>
+                            <li>Levels 1–2: Random</li>
+                            <li>Levels 3–4: Cellular Automata</li>
+                            <li>Levels 5–6: Graph-based rooms</li>
+                            <li>Levels 7–8: Perlin noise</li>
+                            <li>Level 9 on: Transformer model (trained on Lode Runner)</li>
                         </ul>
                         The algorithm used depends on your level range.
                     </div>
