@@ -7,6 +7,7 @@ export function getAlgorithmForLevel(level) {
     if (level <= 4) return 4;  // cellular automata
     if (level <= 6) return 6;  // graph (rooms + corridors)
     if (level <= 8) return 2;  // perlin
+    if (level <= 12) return 8; // rooms (Spelunky-style templates)
     return 7;                  // transformer
 }
 

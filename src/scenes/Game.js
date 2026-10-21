@@ -94,24 +94,19 @@ export class Game extends Phaser.Scene {
             }
         }
 
+        // The generator plans start, key and exit on a route you can walk and
+        // jump; older responses without a plan fall back to the corner rule.
+        const cell = (c) => c && { x: c[0], y: c[1] };
+        this.planned = { start: cell(this.levelData.start), key: cell(this.levelData.key), exit: cell(this.levelData.exit) };
         const validSpots = this.findValid2x2Spots(grid);
-
-        if (validSpots.length < 2) {
+        if (!this.planned.start && validSpots.length < 2) {
             console.error("No valid start/exit positions found");
             this.scene.start('MainMenu'); // fallback
             return;
         }
-
-        // Sort by distance from origin, then pick furthest
-        validSpots.sort((a, b) => {
-            const da = a.x * a.x + a.y * a.y;
-            const db = b.x * b.x + b.y * b.y;
-            return da - db;
-        });
-
-        const playerStart = validSpots[0];
-
-        const exitSpot = validSpots[validSpots.length - 1];
+        validSpots.sort((a, b) => (a.x * a.x + a.y * a.y) - (b.x * b.x + b.y * b.y));
+        const playerStart = this.planned.start || validSpots[0];
+        const exitSpot = this.planned.exit || validSpots[validSpots.length - 1];
 
         const playerX = playerStart.x * tileSize + tileSize / 2;
         const playerY = playerStart.y * tileSize + tileSize / 2;
@@ -183,7 +178,9 @@ export class Game extends Phaser.Scene {
 
         // coins
         this.coinsGroup = this.physics.add.staticGroup();
-        const floorSpots = this.findValid2x2Spots(grid); // reuse existing valid floor logic
+        // coins go anywhere open, except on the start, key or exit
+        const reserved = [playerStart, exitSpot, this.planned.key].filter(Boolean).map(s => `${s.x},${s.y}`);
+        const floorSpots = this.findValid2x2Spots(grid).filter(s => !reserved.includes(`${s.x},${s.y}`));
         Phaser.Utils.Array.Shuffle(floorSpots);
         this.coinsCollected = 0;
         // 3 + level coins, but never more than the map has room for, keeping
@@ -201,9 +198,9 @@ export class Game extends Phaser.Scene {
 
         //key
         this.hasKey = false;
-        const keySpot = floorSpots[this.totalCoins]; // Use the next unused spot after coins
+        const keySpot = this.planned.key || floorSpots[this.totalCoins]; // planned, or the next unused spot
         // Cells already taken by coins and the key; enemies spawn elsewhere
-        this.usedSpots = new Set(floorSpots.slice(0, this.totalCoins + 1).map(s => `${s.x},${s.y}`));
+        this.usedSpots = new Set([...floorSpots.slice(0, this.totalCoins + 1).map(s => `${s.x},${s.y}`), ...reserved]);
         if (keySpot) {
             const keyX = keySpot.x * tileSize + tileSize / 2;
             const keyY = keySpot.y * tileSize + tileSize / 2;

@@ -7,7 +7,8 @@ const LEVELS = [
     ['3–4', 'Cellular automata'],
     ['5–6', 'Graph rooms and corridors'],
     ['7–8', 'Perlin noise'],
-    ['9+', 'Transformer model trained on Lode Runner levels'],
+    ['9–12', 'Rooms stitched from hand-made templates'],
+    ['13+', 'Transformer model trained on Lode Runner levels'],
 ];
 
 export class Help extends Phaser.Scene {
