@@ -1,4 +1,5 @@
-import { API_URL, GENERATOR_URL } from '../config.js';
+import { API_URL } from '../config.js';
+import { getAlgorithmForLevel, fetchLevelData } from '../levels.js';
 import {LoadingSpinner} from '../components/LoadingSpinner.js';
 
 export class LevelComplete extends Phaser.Scene {
@@ -55,12 +56,12 @@ export class LevelComplete extends Phaser.Scene {
         const nextButton = this.add.text(screenWidth / 2, screenHeight / 2 + 20, 'Play Next Level', buttonStyle).setOrigin(0.5).setInteractive();
         nextButton.on('pointerdown', async () => {
             const nextLevel = this.levelId + 1;
-            const algorithm = this.getAlgorithmForLevel(nextLevel);
+            const algorithm = getAlgorithmForLevel(nextLevel);
 
             LoadingSpinner.show("Loading next level. Might take some time.");
 
             try {
-                const levelData = await this.fetchLevelData(algorithm, nextLevel);
+                const levelData = await fetchLevelData(algorithm, nextLevel);
 
                 this.scene.start('Game', {
                     levelId: nextLevel,
@@ -124,36 +125,6 @@ export class LevelComplete extends Phaser.Scene {
         }
 
         return await response.json(); // optional: use returned score data
-    }
-    // Calculate algorithm based on level number
-    getAlgorithmForLevel(level) {
-        if (level <= 10) return 1;
-        if (level <= 20) return 6;
-        return 7;
-    }
-
-    // Fetch level data dynamically
-    async fetchLevelData(algorithmId, levelId) {
-        const baseUrl = `${GENERATOR_URL}/generate/${algorithmId}`;
-
-        // Dynamic parameters based on level
-        const params = new URLSearchParams({
-            x: (25 + Math.floor(levelId / 2)).toString(), // Grid size grows slowly
-            y: (25 + Math.floor(levelId / 2)).toString(),
-            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2) * 100, // Slowly increase wall density
-            iterations: (1 + Math.floor(levelId / 5)).toString(),
-            min_leaf_size: Math.max(5, 8 - Math.floor(levelId / 10)).toString(),
-            max_leaf_size: Math.min(20, 15 + Math.floor(levelId / 10)).toString(),
-            max_rooms: Math.min(25, 10 + levelId).toString()
-        });
-
-        const response = await fetch(`${baseUrl}?${params.toString()}`);
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch level data');
-        }
-
-        return await response.json();
     }
 
     // Display error message if any

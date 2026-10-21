@@ -1,4 +1,5 @@
-import { API_URL, GENERATOR_URL } from '../config.js';
+import { API_URL } from '../config.js';
+import { getAlgorithmForLevel, fetchLevelData } from '../levels.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 export class MainMenu extends Phaser.Scene {
@@ -242,41 +243,11 @@ export class MainMenu extends Phaser.Scene {
         return highestLevel + 1;
     }
 
-    getAlgorithmForLevel(level) {
-        // todo: create a rule engine
-        if (level <= 2) return 1;
-        if (level <= 4) return 4;
-        if (level <= 6) return 6;
-        if (level <= 8) return 2;
-        return 7;
-    }
-
-    async fetchLevelData(algorithmId, levelId) {
-        const baseUrl = `${GENERATOR_URL}/generate/${algorithmId}`;
-        const params = new URLSearchParams({
-            x: (20 + 2*Math.floor(levelId / 2)).toString(),
-            y: (15 + Math.floor(levelId / 2)).toString(),
-            wall_probability: (0.4 + (levelId * 0.005)).toFixed(2) * 100,
-            iterations: (1 + Math.floor(levelId / 5)).toString(),
-            min_leaf_size: Math.max(2, 8 - Math.floor(levelId / 10)).toString(),
-            max_leaf_size: Math.min(7, 15 + Math.floor(levelId / 10)).toString(),
-            max_rooms: Math.min(7, 10 + levelId).toString()
-        });
-
-        const response = await fetch(`${baseUrl}?${params.toString()}`);
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch level data');
-        }
-
-        return await response.json();
-    }
-
     async loadNextLevelData() {
         const token = this.registry.get('token');
         const nextLevel = await this.getNextLevel(token);
-        const algorithm = this.getAlgorithmForLevel(nextLevel);
-        const levelData = await this.fetchLevelData(algorithm, nextLevel);
+        const algorithm = getAlgorithmForLevel(nextLevel);
+        const levelData = await fetchLevelData(algorithm, nextLevel);
 
         this.scene.start('Game', {
             levelId: nextLevel,
