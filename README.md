@@ -13,14 +13,70 @@ This repo is the web client (Phaser 3 + Vite). It is one of three repos:
 | [PCG-for-game-levels-generation](https://github.com/AwasthiNikhil/PCG-for-game-levels-generation) | Level generators and the Flask API |
 | [pcg-db](https://github.com/AwasthiNikhil/pcg-db) | Accounts, scores, shop, skins and the admin dashboard (Laravel 13) |
 
-## Run it
+## Run the whole game locally
 
-Start the other two services first. Their READMEs have the steps. Then:
+The game needs all three repos running: the generator API, the backend and
+this client. You need Git, Python 3.9+, PHP 8.3+ with Composer, and Node.
+
+### 1. Get the code
+
+Clone the three repos side by side:
 
 ```sh
-npm ci
-npm run dev        # http://localhost:8080
+mkdir lucky-you && cd lucky-you
+git clone https://github.com/AwasthiNikhil/PCG-for-game-levels-generation.git
+git clone https://github.com/AwasthiNikhil/pcg-db.git
+git clone https://github.com/AwasthiNikhil/pcg.git
 ```
+
+### 2. Level generator (port 5055)
+
+```sh
+cd PCG-for-game-levels-generation
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cd api && ../.venv/bin/python main2.py
+```
+
+Leave it running. Check it with
+`curl http://127.0.0.1:5055/generate/8`, which returns a level as JSON.
+
+### 3. Backend (port 8091)
+
+In a new terminal:
+
+```sh
+cd pcg-db
+composer install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed
+npm ci && npm run build          # admin dashboard assets
+php artisan serve --host 127.0.0.1 --port 8091
+```
+
+Leave it running.
+
+### 4. Game client (port 8080)
+
+In a third terminal:
+
+```sh
+cd pcg
+npm ci
+npm run dev -- --host 127.0.0.1 --port 8080
+```
+
+Open http://127.0.0.1:8080. Create an account, or sign in as `player1` /
+`password`. The admin dashboard is at http://127.0.0.1:8091/admin/login
+(`admin@example.com` / `secret123`).
+
+### Stopping
+
+Press Ctrl+C in each of the three terminals.
+
+### Configuration
 
 The client looks for the backends at these addresses:
 
@@ -76,7 +132,8 @@ grid and adjusts the generator settings as the level number goes up:
 | 3–4 | Cellular automata |
 | 5–6 | Graph (rooms and corridors) |
 | 7–8 | Perlin noise |
-| 9 and up | Transformer model |
+| 9–12 | Rooms: a Spelunky-style grid of hand-made room templates |
+| 13 and up | Transformer model |
 
 ### Enemies
 
