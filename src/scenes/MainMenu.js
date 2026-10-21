@@ -1,6 +1,19 @@
 import { API_URL } from '../config.js';
 import { getAlgorithmForLevel, fetchLevelData } from '../levels.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
+import { endSession } from '../session.js';
+import { mountScreen, drawBackdrop, icon, esc, avatarImg, flagImg, rovingFocus } from '../ui/dom.js';
+import { CHARACTERS, characterKey, equippedSkin } from '../perks.js';
+
+const GENERATOR_NAMES = {
+    1: 'Random fill',
+    2: 'Perlin noise',
+    3: 'Simplex noise',
+    4: 'Cellular automata',
+    5: 'BSP rooms',
+    6: 'Graph rooms',
+    7: 'Transformer model',
+};
 
 export class MainMenu extends Phaser.Scene {
     constructor() {
@@ -11,186 +24,112 @@ export class MainMenu extends Phaser.Scene {
     }
 
     create() {
-        const screenWidth = 1920;
-        const screenHeight = 1080;
-
-        const userSettings=this.registry.get('userSettings');
+        const userSettings = this.registry.get('userSettings');
         this.sound.pauseAll();
-        if (!this.sound.get('bg_music')) {
-            this.music = this.sound.add('bg_music', {
-                loop: true,
-                volume: userSettings.music_volume / 100
-            });
-        }
-            this.music.play();
-
-        document.body.style.backgroundColor = '#ffffff';
-
-        // Title (in canvas)
-        this.add.text(screenWidth / 2 - 150, 100, 'Main Menu', {
-            fontSize: '64px',
-            fill: '#000',
-            fontFamily: 'Arial',
+        this.music = this.sound.get('bg_music') || this.sound.add('bg_music', {
+            loop: true,
+            volume: userSettings.music_volume / 100
         });
-        // Phaser in-canvas coin display (top-right, tilted)
-        const coinCount = this.registry.get('user').coins || 0;
+        this.music.play();
 
-        this.add.text(screenWidth - 300, 100, `💰 Coins: ${coinCount}`, {
-            fontSize: '32px',
-            fill: '#222',
-            fontFamily: 'Arial',
-            fontStyle: 'bold',
-        }).setAngle(-10);
+        drawBackdrop(this, { seed: 'menu' });
 
-        // Inventory Display
+        const user = this.registry.get('user');
         const inventory = this.registry.get('inventory') || [];
-        const inventoryWrapper = document.createElement('div');
-        inventoryWrapper.id = 'inventory-wrapper';
-        document.body.appendChild(inventoryWrapper);
+        const owned = (name) => inventory.find(e => e.item?.name?.toLowerCase() === name)?.quantity || 0;
 
-        let inventoryHTML = '<h3>Inventory</h3>';
-        if (inventory.length === 0) {
-            inventoryHTML += '<p>No items yet!</p>';
-        } else {
-            inventoryHTML += '<ul>';
-            inventory.forEach(entry => {
-                let itemName = entry.item.name;
-                if (itemName && itemName.toLowerCase() === 'bomb') itemName = '💣 Bomb';
-                if (itemName && itemName.toLowerCase() === 'wall') itemName = '🧱 Wall';
-                inventoryHTML += `<li>${itemName} x ${entry.quantity}</li>`;
-            });
-            inventoryHTML += '</ul>';
-        }
-        inventoryWrapper.innerHTML = inventoryHTML;
+        const screen = mountScreen(this, `
+            <div class="menu">
+                <header class="menu-top">
+                    <span class="wordmark wordmark--sm">Lucky <span>You</span></span>
+                    <span class="chip" title="Coins">${icon('coin')}<span id="coin-balance">${user.coins ?? 0}</span></span>
+                </header>
 
+                <div class="menu-main">
+                    <button class="play" id="play">
+                        <span class="eyebrow">Next up</span>
+                        <b id="play-level">Play</b>
+                        <small id="play-sub">Generated when you press play</small>
+                    </button>
+                    <nav class="nav" aria-label="Main menu">
+                        <button id="shop">Shop</button>
+                        <button id="locker">Locker</button>
+                        <button id="leaderboard">Leaderboard</button>
+                        <button id="settings">Settings</button>
+                        <button id="help">How to play</button>
+                    </nav>
+                    <p class="message message--error" id="error-msg" role="alert"></p>
+                </div>
 
-        // Wrapper div for buttons
-        const wrapper = document.createElement('div');
-        wrapper.id = 'menu-wrapper';
-        document.body.appendChild(wrapper);
+                <aside class="menu-side">
+                    <div class="panel">
+                        <div class="player">
+                            ${avatarImg(user.avatar)}
+                            <div>
+                                <div class="name">${esc(user.username)}</div>
+                                <div class="sub">${flagImg(user.country)}<span id="player-progress">Loading progress</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <span class="eyebrow">Loadout</span>
+                        <div class="rows">
+                            <div class="row"><span class="grow muted">Character</span><span class="value">${CHARACTERS[characterKey(user.avatar)].name}</span></div>
+                            <div class="row"><span class="grow muted">Skin</span><span class="value">${esc(equippedSkin(user, inventory)?.name?.replace(/ Skin$/, '') || 'Default')}</span></div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <span class="eyebrow">Inventory</span>
+                        <div class="rows">
+                            <div class="row">${icon('bomb')}<span class="grow">Bombs</span><span class="value">${owned('bomb')}</span></div>
+                            <div class="row">${icon('wall')}<span class="grow">Walls</span><span class="value">${owned('wall')}</span></div>
+                        </div>
+                    </div>
+                </aside>
 
-        // Add buttons to the wrapper
-        wrapper.innerHTML = `
-            <button class="menu-btn" id="play">Play</button>
-            <button class="menu-btn" id="leaderboard">Leaderboard</button>
-            <button class="menu-btn" id="shop">Shop</button>
-            <button class="menu-btn" id="settings">Settings</button>
-            <button class="menu-btn" id="help">Help</button>
-            <button class="menu-btn" id="logout">Log Out</button>
-            <p id="error-msg"></p>
-        `;
+                <footer class="menu-foot">
+                    <button class="btn btn--ghost" id="logout">Sign out</button>
+                </footer>
+            </div>
+        `);
 
-        // Add styling via JS
-        const style = document.createElement('style');
-        style.textContent = `
-            #menu-wrapper {
-                position: absolute;
-                top: 30%;
-                left: 50%;
-                transform: translate(-50%, -25%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-                font-family: Arial, sans-serif;
-            }
+        this.errorMessage = screen.querySelector('#error-msg');
+        const $ = (id) => screen.querySelector(id);
 
-            .menu-btn {
-                width: 400px;
-                padding: 20px;
-                font-size: 24px;
-                background: white;
-                border: 2px solid black;
-                color: black;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
+        // Show which level is next and which generator will build it.
+        this.getNextLevel(this.registry.get('token')).then(level => {
+            $('#play-level').textContent = `Level ${level}`;
+            $('#play-sub').textContent = `${GENERATOR_NAMES[getAlgorithmForLevel(level)]} · generated when you press play`;
+            $('#player-progress').textContent = level > 1 ? `${level - 1} level${level > 2 ? 's' : ''} cleared` : 'No levels cleared yet';
+        }).catch(() => {
+            $('#player-progress').textContent = '';
+        });
 
-            .menu-btn:hover {
-                background: black;
-                color: white;
-            }
-
-            #error-msg {
-                color: red;
-                font-size: 18px;
-                margin-top: 10px;
-                height: 24px;
-            }
-
-            #inventory-wrapper {
-                position: absolute;
-                top: 100px;
-                left: 20px;
-                padding: 15px;
-                background: #f0f0f0;
-                border: 2px solid #000;
-                border-radius: 10px;
-                width: 250px;
-                font-family: Arial, sans-serif;
-            }
-
-            #inventory-wrapper h3 {
-                margin: 0 0 10px 0;
-                padding-bottom: 5px;
-                border-bottom: 1px solid #ccc;
-                font-size: 20px;
-            }
-
-            #inventory-wrapper ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            #inventory-wrapper li {
-                font-size: 16px;
-                margin-bottom: 5px;
-            }
-
-        `;
-        document.head.appendChild(style);
-
-        // Get references to buttons
-        const playBtn = document.getElementById('play');
-        const leaderboardBtn = document.getElementById('leaderboard');
-        const shopBtn = document.getElementById('shop');
-        const settingsBtn = document.getElementById('settings');
-        const helpBtn = document.getElementById('help');
-        const logoutBtn = document.getElementById('logout');
-        this.errorMessage = document.getElementById('error-msg');
-
-        // Bind events
-        playBtn.onclick = async () => {
-            LoadingSpinner.show("Loading Level. Have patience...");
+        $('#play').onclick = async () => {
+            LoadingSpinner.show('Generating your level');
             try {
                 await this.loadNextLevelData();
             } catch (error) {
                 console.error('Error loading level:', error);
-                this.showErrorMessage('Failed to load next level!');
+                this.showErrorMessage('Couldn’t generate the level. Is the generator running?');
             } finally {
                 LoadingSpinner.hide();
             }
         };
+        $('#leaderboard').onclick = () => this.scene.start('Leaderboard');
+        $('#shop').onclick = () => this.scene.start('Shop');
+        $('#locker').onclick = () => this.scene.start('Locker');
 
-        leaderboardBtn.onclick = () => this.scene.start('Leaderboard');
-        shopBtn.onclick = () => this.scene.start('Shop');
-        settingsBtn.onclick = () => this.scene.start('Settings');
-        helpBtn.onclick = () => this.scene.start('Help');
-
-        logoutBtn.onclick = async () => {
-            const token = this.registry.get('token');
-            await this.logout(token);
-            this.registry.remove('user');
-            this.registry.remove('token');
-            wrapper.remove(); // Remove UI
-            inventoryWrapper.remove();
+        // Keyboard: W/S or arrows move between options, Enter/Space picks
+        rovingFocus(this, screen, '#play, .nav button, #logout');
+        $('#play').focus();
+        $('#settings').onclick = () => this.scene.start('Settings');
+        $('#help').onclick = () => this.scene.start('Help');
+        $('#logout').onclick = async () => {
+            await this.logout(this.registry.get('token'));
+            endSession(this.registry);
             this.scene.start('Login');
         };
-        this.events.on('shutdown', () => {
-            document.getElementById('menu-wrapper')?.remove();
-            document.getElementById('inventory-wrapper')?.remove();
-        });
     }
 
     showErrorMessage(message) {
@@ -200,7 +139,7 @@ export class MainMenu extends Phaser.Scene {
     }
 
     async logout(token) {
-        LoadingSpinner.show("See ya player...");
+        LoadingSpinner.show('Signing out');
 
         try {
             const response = await fetch(`${API_URL}/logout`, {
@@ -213,11 +152,11 @@ export class MainMenu extends Phaser.Scene {
 
             const data = await response.json();
             if (response.status !== 200) {
-                this.showErrorMessage('Invalid token!');
+                this.showErrorMessage('Your session had already ended.');
             }
         } catch (error) {
             console.error('Error logging out:', error);
-            this.showErrorMessage('Error logging out!');
+            this.showErrorMessage('Couldn’t sign out cleanly.');
         }finally{
             LoadingSpinner.hide();
         }

@@ -1,5 +1,257 @@
+import { mountScreen, authLayout, drawBackdrop } from '../ui/dom.js';
+import { startSession } from '../session.js';
 import { API_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
+
+const COUNTRIES = [
+    ["AF", "Afghanistan"],
+    ["AX", "Åland Islands"],
+    ["AL", "Albania"],
+    ["DZ", "Algeria"],
+    ["AS", "American Samoa"],
+    ["AD", "Andorra"],
+    ["AO", "Angola"],
+    ["AI", "Anguilla"],
+    ["AQ", "Antarctica"],
+    ["AG", "Antigua and Barbuda"],
+    ["AR", "Argentina"],
+    ["AM", "Armenia"],
+    ["AW", "Aruba"],
+    ["AU", "Australia"],
+    ["AT", "Austria"],
+    ["AZ", "Azerbaijan"],
+    ["BS", "Bahamas"],
+    ["BH", "Bahrain"],
+    ["BD", "Bangladesh"],
+    ["BB", "Barbados"],
+    ["BY", "Belarus"],
+    ["BE", "Belgium"],
+    ["BZ", "Belize"],
+    ["BJ", "Benin"],
+    ["BM", "Bermuda"],
+    ["BT", "Bhutan"],
+    ["BO", "Bolivia (Plurinational State of)"],
+    ["BA", "Bosnia and Herzegovina"],
+    ["BW", "Botswana"],
+    ["BV", "Bouvet Island"],
+    ["BR", "Brazil"],
+    ["IO", "British Indian Ocean Territory"],
+    ["BN", "Brunei Darussalam"],
+    ["BG", "Bulgaria"],
+    ["BF", "Burkina Faso"],
+    ["BI", "Burundi"],
+    ["CV", "Cabo Verde"],
+    ["KH", "Cambodia"],
+    ["CM", "Cameroon"],
+    ["CA", "Canada"],
+    ["KY", "Cayman Islands"],
+    ["CF", "Central African Republic"],
+    ["TD", "Chad"],
+    ["CL", "Chile"],
+    ["CN", "China"],
+    ["CX", "Christmas Island"],
+    ["CC", "Cocos (Keeling) Islands"],
+    ["CO", "Colombia"],
+    ["KM", "Comoros"],
+    ["CG", "Congo"],
+    ["CD", "Congo (Democratic Republic of the)"],
+    ["CK", "Cook Islands"],
+    ["CR", "Costa Rica"],
+    ["CI", "Côte d’Ivoire"],
+    ["HR", "Croatia"],
+    ["CU", "Cuba"],
+    ["CY", "Cyprus"],
+    ["CZ", "Czechia"],
+    ["DK", "Denmark"],
+    ["DJ", "Djibouti"],
+    ["DM", "Dominica"],
+    ["DO", "Dominican Republic"],
+    ["EC", "Ecuador"],
+    ["EG", "Egypt"],
+    ["SV", "El Salvador"],
+    ["GQ", "Equatorial Guinea"],
+    ["ER", "Eritrea"],
+    ["EE", "Estonia"],
+    ["SZ", "Eswatini"],
+    ["ET", "Ethiopia"],
+    ["FK", "Falkland Islands (Malvinas)"],
+    ["FO", "Faroe Islands"],
+    ["FJ", "Fiji"],
+    ["FI", "Finland"],
+    ["FR", "France"],
+    ["GF", "French Guiana"],
+    ["PF", "French Polynesia"],
+    ["TF", "French Southern Territories"],
+    ["GA", "Gabon"],
+    ["GM", "Gambia"],
+    ["GE", "Georgia"],
+    ["DE", "Germany"],
+    ["GH", "Ghana"],
+    ["GI", "Gibraltar"],
+    ["GR", "Greece"],
+    ["GL", "Greenland"],
+    ["GD", "Grenada"],
+    ["GP", "Guadeloupe"],
+    ["GU", "Guam"],
+    ["GT", "Guatemala"],
+    ["GG", "Guernsey"],
+    ["GN", "Guinea"],
+    ["GW", "Guinea‑Bissau"],
+    ["GY", "Guyana"],
+    ["HT", "Haiti"],
+    ["HM", "Heard Island and McDonald Islands"],
+    ["VA", "Holy See"],
+    ["HN", "Honduras"],
+    ["HK", "Hong Kong Special Administrative Region of China"],
+    ["HU", "Hungary"],
+    ["IS", "Iceland"],
+    ["IN", "India"],
+    ["ID", "Indonesia"],
+    ["IR", "Iran (Islamic Republic of)"],
+    ["IQ", "Iraq"],
+    ["IE", "Ireland"],
+    ["IM", "Isle of Man"],
+    ["IL", "Israel"],
+    ["IT", "Italy"],
+    ["JM", "Jamaica"],
+    ["JP", "Japan"],
+    ["JE", "Jersey"],
+    ["JO", "Jordan"],
+    ["KZ", "Kazakhstan"],
+    ["KE", "Kenya"],
+    ["KI", "Kiribati"],
+    ["KP", "Korea (Democratic People’s Republic of)"],
+    ["KR", "Korea (Republic of)"],
+    ["KW", "Kuwait"],
+    ["KG", "Kyrgyzstan"],
+    ["LA", "Lao People’s Democratic Republic"],
+    ["LV", "Latvia"],
+    ["LB", "Lebanon"],
+    ["LS", "Lesotho"],
+    ["LR", "Liberia"],
+    ["LY", "Libya"],
+    ["LI", "Liechtenstein"],
+    ["LT", "Lithuania"],
+    ["LU", "Luxembourg"],
+    ["MO", "Macao Special Administrative Region of China"],
+    ["MG", "Madagascar"],
+    ["MW", "Malawi"],
+    ["MY", "Malaysia"],
+    ["MV", "Maldives"],
+    ["ML", "Mali"],
+    ["MT", "Malta"],
+    ["MH", "Marshall Islands"],
+    ["MQ", "Martinique"],
+    ["MR", "Mauritania"],
+    ["MU", "Mauritius"],
+    ["YT", "Mayotte"],
+    ["MX", "Mexico"],
+    ["FM", "Micronesia (Federated States of)"],
+    ["MD", "Moldova (Republic of)"],
+    ["MC", "Monaco"],
+    ["MN", "Mongolia"],
+    ["ME", "Montenegro"],
+    ["MS", "Montserrat"],
+    ["MA", "Morocco"],
+    ["MZ", "Mozambique"],
+    ["MM", "Myanmar"],
+    ["NA", "Namibia"],
+    ["NR", "Nauru"],
+    ["NP", "Nepal"],
+    ["NL", "Netherlands"],
+    ["NC", "New Caledonia"],
+    ["NZ", "New Zealand"],
+    ["NI", "Nicaragua"],
+    ["NE", "Niger"],
+    ["NG", "Nigeria"],
+    ["NU", "Niue"],
+    ["NF", "Norfolk Island"],
+    ["MK", "North Macedonia"],
+    ["MP", "Northern Mariana Islands"],
+    ["NO", "Norway"],
+    ["OM", "Oman"],
+    ["PK", "Pakistan"],
+    ["PW", "Palau"],
+    ["PS", "Palestine, State of"],
+    ["PA", "Panama"],
+    ["PG", "Papua New Guinea"],
+    ["PY", "Paraguay"],
+    ["PE", "Peru"],
+    ["PH", "Philippines"],
+    ["PN", "Pitcairn"],
+    ["PL", "Poland"],
+    ["PT", "Portugal"],
+    ["PR", "Puerto Rico"],
+    ["QA", "Qatar"],
+    ["RE", "Réunion"],
+    ["RO", "Romania"],
+    ["RU", "Russian Federation"],
+    ["RW", "Rwanda"],
+    ["BL", "Saint Barthélemy"],
+    ["SH", "Saint Helena, Ascension and Tristan da Cunha"],
+    ["KN", "Saint Kitts and Nevis"],
+    ["LC", "Saint Lucia"],
+    ["MF", "Saint Martin (French part)"],
+    ["PM", "Saint Pierre and Miquelon"],
+    ["VC", "Saint Vincent and the Grenadines"],
+    ["WS", "Samoa"],
+    ["SM", "San Marino"],
+    ["ST", "Sao Tome and Principe"],
+    ["SA", "Saudi Arabia"],
+    ["SN", "Senegal"],
+    ["RS", "Serbia"],
+    ["SC", "Seychelles"],
+    ["SL", "Sierra Leone"],
+    ["SG", "Singapore"],
+    ["SX", "Sint Maarten (Dutch part)"],
+    ["SK", "Slovakia"],
+    ["SI", "Slovenia"],
+    ["SB", "Solomon Islands"],
+    ["SO", "Somalia"],
+    ["ZA", "South Africa"],
+    ["GS", "South Georgia and the South Sandwich Islands"],
+    ["SS", "South Sudan"],
+    ["ES", "Spain"],
+    ["LK", "Sri Lanka"],
+    ["SD", "Sudan"],
+    ["SR", "Suriname"],
+    ["SJ", "Svalbard and Jan Mayen"],
+    ["SE", "Sweden"],
+    ["CH", "Switzerland"],
+    ["SY", "Syrian Arab Republic"],
+    ["TW", "Taiwan, Province of China"],
+    ["TJ", "Tajikistan"],
+    ["TZ", "Tanzania, United Republic of"],
+    ["TH", "Thailand"],
+    ["TL", "Timor‑Leste"],
+    ["TG", "Togo"],
+    ["TK", "Tokelau"],
+    ["TO", "Tonga"],
+    ["TT", "Trinidad and Tobago"],
+    ["TN", "Tunisia"],
+    ["TR", "Turkey"],
+    ["TM", "Turkmenistan"],
+    ["TC", "Turks and Caicos Islands"],
+    ["TV", "Tuvalu"],
+    ["UG", "Uganda"],
+    ["UA", "Ukraine"],
+    ["AE", "United Arab Emirates"],
+    ["GB", "United Kingdom of Great Britain and Northern Ireland"],
+    ["UM", "United States Minor Outlying Islands"],
+    ["US", "United States of America"],
+    ["UY", "Uruguay"],
+    ["UZ", "Uzbekistan"],
+    ["VU", "Vanuatu"],
+    ["VE", "Venezuela (Bolivarian Republic of)"],
+    ["VN", "Viet Nam"],
+    ["VG", "Virgin Islands (British)"],
+    ["VI", "Virgin Islands (U.S.)"],
+    ["WF", "Wallis and Futuna"],
+    ["EH", "Western Sahara"],
+    ["YE", "Yemen"],
+    ["ZM", "Zambia"],
+    ["ZW", "Zimbabwe"],
+];
 
 export class Register extends Phaser.Scene {
     constructor() {
@@ -9,511 +261,101 @@ export class Register extends Phaser.Scene {
     preload() { }
 
     create() {
-        const screenWidth = 1920;
-        const screenHeight = 1080;
+        drawBackdrop(this, { seed: 'register' });
 
-        // Set full white background behind Phaser canvas (in your HTML or with CSS)
-        document.body.style.backgroundColor = '#ffffff';
+        const avatars = ['warrior', 'mage', 'archer'];
+        const screen = mountScreen(this, authLayout(`
+            <h2 class="heading">Create an account</h2>
+            <form class="form" id="register-form" novalidate>
+                <div class="form-grid">
+                    <label class="field"><span>Username</span>
+                        <input class="input" id="username" autocomplete="username" required></label>
+                    <label class="field"><span>Email</span>
+                        <input class="input" id="email" type="email" autocomplete="email" required></label>
+                    <label class="field"><span>Password</span>
+                        <input class="input" id="password" type="password" autocomplete="new-password" minlength="6" required></label>
+                    <label class="field"><span>Confirm password</span>
+                        <input class="input" id="confirm-password" type="password" autocomplete="new-password" required></label>
+                    <label class="field span-2"><span>Country</span>
+                        <select class="input" id="country" required>
+                            <option value="" disabled selected>Choose your country</option>
+                            ${COUNTRIES.map(([code, name]) => `<option value="${code}">${name}</option>`).join('')}
+                        </select></label>
+                </div>
+                <fieldset class="choice-group">
+                    <legend>Avatar</legend>
+                    ${avatars.map((a, i) => `
+                        <label class="choice">
+                            <input type="radio" name="avatar" value="${a}" ${i === 0 ? 'checked' : ''}>
+                            <span class="choice-card"><img src="assets/avatars/${a}.png" alt="">${a[0].toUpperCase() + a.slice(1)}</span>
+                        </label>`).join('')}
+                </fieldset>
+                <p class="message message--error" id="error-msg" role="alert"></p>
+                <button class="btn btn--primary btn--lg btn--block" type="submit">Create account</button>
+            </form>
+            <p class="auth-switch">Already playing? <button type="button" id="login-btn">Sign in</button></p>
+        `));
 
-        // Title
-        this.add.text(screenWidth / 2 - 150, 80, 'Lucky You', { fontSize: '64px', fill: '#000' });
+        this.errorMessage = screen.querySelector('#error-msg');
+        const $ = (id) => screen.querySelector(id);
+        $('#username').focus();
+        $('#login-btn').onclick = () => this.scene.start('Login');
 
-        // wrapper div
-        const wrapper = document.createElement('div');
-        wrapper.id = 'auth-wrapper';
-        wrapper.classList.add('register');
-        document.body.appendChild(wrapper);
+        $('#register-form').onsubmit = (e) => {
+            e.preventDefault();
+            const username = $('#username').value.trim();
+            const password = $('#password').value;
+            const confirmPassword = $('#confirm-password').value;
+            const email = $('#email').value.trim();
+            const country = $('#country').value;
+            const avatar = screen.querySelector('input[name="avatar"]:checked')?.value;
 
-        wrapper.innerHTML = `
-             <div class="input-group">
-                <input type="text" id="username" required placeholder=" ">
-                <label for="username">Username</label>
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" required placeholder=" ">
-                <label for="password">Password</label>
-            </div>
-            <div class="input-group">
-                <input type="password" id="confirm-password" required placeholder=" ">
-                <label for="confirm-password">Confirm Password</label>
-            </div>
-            <div class="input-group">
-                <input type="email" id="email" required placeholder=" ">
-                <label for="email">Email Address</label>
-            </div>
-            <div class="input-group">
-                <select id="country" required>
-                    <option value="" disabled selected hidden>Select Country</option>
-                    <option value="AF">Afghanistan</option>
-                    <option value="AX">Åland Islands</option>
-                    <option value="AL">Albania</option>
-                    <option value="DZ">Algeria</option>
-                    <option value="AS">American Samoa</option>
-                    <option value="AD">Andorra</option>
-                    <option value="AO">Angola</option>
-                    <option value="AI">Anguilla</option>
-                    <option value="AQ">Antarctica</option>
-                    <option value="AG">Antigua and Barbuda</option>
-                    <option value="AR">Argentina</option>
-                    <option value="AM">Armenia</option>
-                    <option value="AW">Aruba</option>
-                    <option value="AU">Australia</option>
-                    <option value="AT">Austria</option>
-                    <option value="AZ">Azerbaijan</option>
-                    <option value="BS">Bahamas</option>
-                    <option value="BH">Bahrain</option>
-                    <option value="BD">Bangladesh</option>
-                    <option value="BB">Barbados</option>
-                    <option value="BY">Belarus</option>
-                    <option value="BE">Belgium</option>
-                    <option value="BZ">Belize</option>
-                    <option value="BJ">Benin</option>
-                    <option value="BM">Bermuda</option>
-                    <option value="BT">Bhutan</option>
-                    <option value="BO">Bolivia (Plurinational State of)</option>
-                    <option value="BA">Bosnia and Herzegovina</option>
-                    <option value="BW">Botswana</option>
-                    <option value="BV">Bouvet Island</option>
-                    <option value="BR">Brazil</option>
-                    <option value="IO">British Indian Ocean Territory</option>
-                    <option value="BN">Brunei Darussalam</option>
-                    <option value="BG">Bulgaria</option>
-                    <option value="BF">Burkina Faso</option>
-                    <option value="BI">Burundi</option>
-                    <option value="CV">Cabo Verde</option>
-                    <option value="KH">Cambodia</option>
-                    <option value="CM">Cameroon</option>
-                    <option value="CA">Canada</option>
-                    <option value="KY">Cayman Islands</option>
-                    <option value="CF">Central African Republic</option>
-                    <option value="TD">Chad</option>
-                    <option value="CL">Chile</option>
-                    <option value="CN">China</option>
-                    <option value="CX">Christmas Island</option>
-                    <option value="CC">Cocos (Keeling) Islands</option>
-                    <option value="CO">Colombia</option>
-                    <option value="KM">Comoros</option>
-                    <option value="CG">Congo</option>
-                    <option value="CD">Congo (Democratic Republic of the)</option>
-                    <option value="CK">Cook Islands</option>
-                    <option value="CR">Costa Rica</option>
-                    <option value="CI">Côte d’Ivoire</option>
-                    <option value="HR">Croatia</option>
-                    <option value="CU">Cuba</option>
-                    <option value="CY">Cyprus</option>
-                    <option value="CZ">Czechia</option>
-                    <option value="DK">Denmark</option>
-                    <option value="DJ">Djibouti</option>
-                    <option value="DM">Dominica</option>
-                    <option value="DO">Dominican Republic</option>
-                    <option value="EC">Ecuador</option>
-                    <option value="EG">Egypt</option>
-                    <option value="SV">El Salvador</option>
-                    <option value="GQ">Equatorial Guinea</option>
-                    <option value="ER">Eritrea</option>
-                    <option value="EE">Estonia</option>
-                    <option value="SZ">Eswatini</option>
-                    <option value="ET">Ethiopia</option>
-                    <option value="FK">Falkland Islands (Malvinas)</option>
-                    <option value="FO">Faroe Islands</option>
-                    <option value="FJ">Fiji</option>
-                    <option value="FI">Finland</option>
-                    <option value="FR">France</option>
-                    <option value="GF">French Guiana</option>
-                    <option value="PF">French Polynesia</option>
-                    <option value="TF">French Southern Territories</option>
-                    <option value="GA">Gabon</option>
-                    <option value="GM">Gambia</option>
-                    <option value="GE">Georgia</option>
-                    <option value="DE">Germany</option>
-                    <option value="GH">Ghana</option>
-                    <option value="GI">Gibraltar</option>
-                    <option value="GR">Greece</option>
-                    <option value="GL">Greenland</option>
-                    <option value="GD">Grenada</option>
-                    <option value="GP">Guadeloupe</option>
-                    <option value="GU">Guam</option>
-                    <option value="GT">Guatemala</option>
-                    <option value="GG">Guernsey</option>
-                    <option value="GN">Guinea</option>
-                    <option value="GW">Guinea‑Bissau</option>
-                    <option value="GY">Guyana</option>
-                    <option value="HT">Haiti</option>
-                    <option value="HM">Heard Island and McDonald Islands</option>
-                    <option value="VA">Holy See</option>
-                    <option value="HN">Honduras</option>
-                    <option value="HK">Hong Kong Special Administrative Region of China</option>
-                    <option value="HU">Hungary</option>
-                    <option value="IS">Iceland</option>
-                    <option value="IN">India</option>
-                    <option value="ID">Indonesia</option>
-                    <option value="IR">Iran (Islamic Republic of)</option>
-                    <option value="IQ">Iraq</option>
-                    <option value="IE">Ireland</option>
-                    <option value="IM">Isle of Man</option>
-                    <option value="IL">Israel</option>
-                    <option value="IT">Italy</option>
-                    <option value="JM">Jamaica</option>
-                    <option value="JP">Japan</option>
-                    <option value="JE">Jersey</option>
-                    <option value="JO">Jordan</option>
-                    <option value="KZ">Kazakhstan</option>
-                    <option value="KE">Kenya</option>
-                    <option value="KI">Kiribati</option>
-                    <option value="KP">Korea (Democratic People’s Republic of)</option>
-                    <option value="KR">Korea (Republic of)</option>
-                    <option value="KW">Kuwait</option>
-                    <option value="KG">Kyrgyzstan</option>
-                    <option value="LA">Lao People’s Democratic Republic</option>
-                    <option value="LV">Latvia</option>
-                    <option value="LB">Lebanon</option>
-                    <option value="LS">Lesotho</option>
-                    <option value="LR">Liberia</option>
-                    <option value="LY">Libya</option>
-                    <option value="LI">Liechtenstein</option>
-                    <option value="LT">Lithuania</option>
-                    <option value="LU">Luxembourg</option>
-                    <option value="MO">Macao Special Administrative Region of China</option>
-                    <option value="MG">Madagascar</option>
-                    <option value="MW">Malawi</option>
-                    <option value="MY">Malaysia</option>
-                    <option value="MV">Maldives</option>
-                    <option value="ML">Mali</option>
-                    <option value="MT">Malta</option>
-                    <option value="MH">Marshall Islands</option>
-                    <option value="MQ">Martinique</option>
-                    <option value="MR">Mauritania</option>
-                    <option value="MU">Mauritius</option>
-                    <option value="YT">Mayotte</option>
-                    <option value="MX">Mexico</option>
-                    <option value="FM">Micronesia (Federated States of)</option>
-                    <option value="MD">Moldova (Republic of)</option>
-                    <option value="MC">Monaco</option>
-                    <option value="MN">Mongolia</option>
-                    <option value="ME">Montenegro</option>
-                    <option value="MS">Montserrat</option>
-                    <option value="MA">Morocco</option>
-                    <option value="MZ">Mozambique</option>
-                    <option value="MM">Myanmar</option>
-                    <option value="NA">Namibia</option>
-                    <option value="NR">Nauru</option>
-                    <option value="NP">Nepal</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="NC">New Caledonia</option>
-                    <option value="NZ">New Zealand</option>
-                    <option value="NI">Nicaragua</option>
-                    <option value="NE">Niger</option>
-                    <option value="NG">Nigeria</option>
-                    <option value="NU">Niue</option>
-                    <option value="NF">Norfolk Island</option>
-                    <option value="MK">North Macedonia</option>
-                    <option value="MP">Northern Mariana Islands</option>
-                    <option value="NO">Norway</option>
-                    <option value="OM">Oman</option>
-                    <option value="PK">Pakistan</option>
-                    <option value="PW">Palau</option>
-                    <option value="PS">Palestine, State of</option>
-                    <option value="PA">Panama</option>
-                    <option value="PG">Papua New Guinea</option>
-                    <option value="PY">Paraguay</option>
-                    <option value="PE">Peru</option>
-                    <option value="PH">Philippines</option>
-                    <option value="PN">Pitcairn</option>
-                    <option value="PL">Poland</option>
-                    <option value="PT">Portugal</option>
-                    <option value="PR">Puerto Rico</option>
-                    <option value="QA">Qatar</option>
-                    <option value="RE">Réunion</option>
-                    <option value="RO">Romania</option>
-                    <option value="RU">Russian Federation</option>
-                    <option value="RW">Rwanda</option>
-                    <option value="BL">Saint Barthélemy</option>
-                    <option value="SH">Saint Helena, Ascension and Tristan da Cunha</option>
-                    <option value="KN">Saint Kitts and Nevis</option>
-                    <option value="LC">Saint Lucia</option>
-                    <option value="MF">Saint Martin (French part)</option>
-                    <option value="PM">Saint Pierre and Miquelon</option>
-                    <option value="VC">Saint Vincent and the Grenadines</option>
-                    <option value="WS">Samoa</option>
-                    <option value="SM">San Marino</option>
-                    <option value="ST">Sao Tome and Principe</option>
-                    <option value="SA">Saudi Arabia</option>
-                    <option value="SN">Senegal</option>
-                    <option value="RS">Serbia</option>
-                    <option value="SC">Seychelles</option>
-                    <option value="SL">Sierra Leone</option>
-                    <option value="SG">Singapore</option>
-                    <option value="SX">Sint Maarten (Dutch part)</option>
-                    <option value="SK">Slovakia</option>
-                    <option value="SI">Slovenia</option>
-                    <option value="SB">Solomon Islands</option>
-                    <option value="SO">Somalia</option>
-                    <option value="ZA">South Africa</option>
-                    <option value="GS">South Georgia and the South Sandwich Islands</option>
-                    <option value="SS">South Sudan</option>
-                    <option value="ES">Spain</option>
-                    <option value="LK">Sri Lanka</option>
-                    <option value="SD">Sudan</option>
-                    <option value="SR">Suriname</option>
-                    <option value="SJ">Svalbard and Jan Mayen</option>
-                    <option value="SE">Sweden</option>
-                    <option value="CH">Switzerland</option>
-                    <option value="SY">Syrian Arab Republic</option>
-                    <option value="TW">Taiwan, Province of China</option>
-                    <option value="TJ">Tajikistan</option>
-                    <option value="TZ">Tanzania, United Republic of</option>
-                    <option value="TH">Thailand</option>
-                    <option value="TL">Timor‑Leste</option>
-                    <option value="TG">Togo</option>
-                    <option value="TK">Tokelau</option>
-                    <option value="TO">Tonga</option>
-                    <option value="TT">Trinidad and Tobago</option>
-                    <option value="TN">Tunisia</option>
-                    <option value="TR">Turkey</option>
-                    <option value="TM">Turkmenistan</option>
-                    <option value="TC">Turks and Caicos Islands</option>
-                    <option value="TV">Tuvalu</option>
-                    <option value="UG">Uganda</option>
-                    <option value="UA">Ukraine</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="GB">United Kingdom of Great Britain and Northern Ireland</option>
-                    <option value="UM">United States Minor Outlying Islands</option>
-                    <option value="US">United States of America</option>
-                    <option value="UY">Uruguay</option>
-                    <option value="UZ">Uzbekistan</option>
-                    <option value="VU">Vanuatu</option>
-                    <option value="VE">Venezuela (Bolivarian Republic of)</option>
-                    <option value="VN">Viet Nam</option>
-                    <option value="VG">Virgin Islands (British)</option>
-                    <option value="VI">Virgin Islands (U.S.)</option>
-                    <option value="WF">Wallis and Futuna</option>
-                    <option value="EH">Western Sahara</option>
-                    <option value="YE">Yemen</option>
-                    <option value="ZM">Zambia</option>
-                    <option value="ZW">Zimbabwe</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <select id="avatar">
-                    <option value="" disabled selected hidden>Select Avatar</option>
-                    <option value="warrior">Warrior</option>
-                    <option value="mage">Mage</option>
-                    <option value="archer">Archer</option>
-                    <!-- Replace with image picker later -->
-                </select>
-            </div>
-            <div class="btn-group">
-                <button id="register-btn">Register</button>
-                <button id="login-btn">Already have an account? Login Here</button>
-            </div>
-            <p id="error-msg"></p>
-        `;
-
-        // Apply styles
-        const style = document.createElement('style');
-        style.textContent = `
-            #auth-wrapper {
-                position: absolute;
-                top: 30%;
-                left: 50%;
-                transform: translate(-50%, -30%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-                font-family: Arial, sans-serif;
-            }
-            /* Register's form is taller than Login's: start it below the
-               title instead of centring it (which pushed it up over the title). */
-            #auth-wrapper.register {
-                top: 22%;
-                transform: translate(-50%, 0);
-                gap: 16px;
-            }
-            .input-group {
-                position: relative;
-                width: 400px;
-            }
-            .input-group input {
-                width: 100%;
-                padding: 12px;
-                font-size: 18px;
-                border: 2px solid black;
-                background: white;
-                color: black;
-                outline: none;
-            }
-            .input-group label {
-                position: absolute;
-                top: 12px;
-                left: 12px;
-                color: black;
-                background: white;
-                padding: 0 5px;
-                transition: 0.2s;
-                pointer-events: none;
-            }
-            .input-group input:focus + label,
-            .input-group input:not(:placeholder-shown) + label {
-                top: -10px;
-                font-size: 14px;
-                color: black;
-            }
-            .btn-group {
-                display: flex;
-                gap: 20px;
-            }
-            .btn-group button {
-                width: 180px;
-                padding: 12px;
-                background: white;
-                color: black;
-                border: 2px solid black;
-                font-size: 18px;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
-            .btn-group button:hover {
-                background: #000;
-                color: white;
-            }
-            #error-msg {
-                color: red;
-                font-size: 18px;
-                margin-top: 10px;
-                height: 24px;
-            }
-            .input-group select {
-                width: 100%;
-                padding: 12px;
-                font-size: 18px;
-                border: 2px solid black;
-                background: white;
-                color: black;
-                appearance: none;
-                -webkit-appearance: none;
-                -moz-appearance: none;
-            }
-        `;
-        document.head.appendChild(style);
-
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm-password');
-        const emailInput = document.getElementById('email');
-        const countryInput = document.getElementById('country');
-        const avatarInput = document.getElementById('avatar');
-        const loginButton = document.getElementById('login-btn');
-        const registerButton = document.getElementById('register-btn');
-        this.errorMessage = document.getElementById('error-msg');
-
-        loginButton.onclick = () => {
-            this.scene.start('Login');
-        };
-
-        registerButton.onclick = () => {
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-            const email = emailInput.value.trim();
-            const country = countryInput.value;
-            const avatar = avatarInput.value;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-            if(!username || !password || !confirmPassword || !email || !country || !avatar ){
-                this.showErrorMessage('Fill all the fields!');
+            if (!username || !password || !confirmPassword || !email || !country || !avatar) {
+                this.showErrorMessage('Fill in every field.');
                 return;
             }
-            if(password.length < 6){
-                this.showErrorMessage('Password length should be more than 6 characters!');
+            if (password.length < 6) {
+                this.showErrorMessage('Use at least 6 characters for your password.');
                 return;
             }
             if (password !== confirmPassword) {
-                this.showErrorMessage('Passwords do not match!');
+                this.showErrorMessage('The passwords don’t match.');
                 return;
             }
-            if (!emailRegex.test(email)) {
-                this.showErrorMessage('Invalid email address!');
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                this.showErrorMessage('That email address doesn’t look right.');
                 return;
             }
-
-            this.register(username, password, email, country, avatar, wrapper);
+            this.register(username, password, email, country, avatar);
         };
-
-        this.events.on('shutdown', () => {
-            document.getElementById('auth-wrapper')?.remove();
-
-            // Remove any styles injected into <head> by this scene
-            const styles = [...document.head.querySelectorAll('style')];
-            for (const s of styles) {
-                if (s.textContent.includes('#auth-wrapper')) s.remove();
-            }
-        });
-
     }
-    async register(username, password, email, country, avatar, wrapper) {
-        LoadingSpinner.show("Registering user info...");
+
+    async register(username, password, email, country, avatar) {
+        LoadingSpinner.show('Creating your account');
         try {
             const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, email, country, avatar})
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ username, password, email, country, avatar })
             });
-
             const data = await response.json();
-            if (response.status === 201) {
-                const token = data.token;
-
-                // Fetch user settings using token
-                const settings = await this.fetchUserSettings(token);
-                if (!settings) {
-                    this.showErrorMessage('Failed to load user settings.');
-                    return;
-                }
-
-                wrapper.remove();
-                this.registry.set('user', data.user);
-                this.registry.set('token', token);
-                this.registry.set('userSettings', settings);
-
-                this.scene.start('MainMenu');
-            } else {
-                this.showErrorMessage('Registration failed! Username might already exist.');
+            if (response.status !== 201) {
+                this.showErrorMessage(data.message || 'That username is taken. Try another.');
+                return;
             }
+            await startSession(this.registry, data.token);
+            this.scene.start('MainMenu');
         } catch (error) {
             console.error('Error registering:', error);
-            this.showErrorMessage('Error registering!');
+            this.showErrorMessage('Couldn’t reach the server. Try again.');
         } finally {
             LoadingSpinner.hide();
         }
     }
-    async fetchUserSettings(token) {
-        LoadingSpinner.show("Saving settings...");
-        try {
-            const response = await fetch(`${API_URL}/settings`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
 
-            if (response.status === 200) {
-                return await response.json();
-            } else {
-                console.warn('Failed to fetch settings:', await response.text());
-                return null;
-            }
-        } catch (error) {
-            console.error('Error fetching settings:', error);
-            return null;
-        } finally {
-            LoadingSpinner.hide();
-        }
-    }
     showErrorMessage(message) {
         if (this.errorMessage) {
             this.errorMessage.textContent = message;
         }
     }
-    update() { }
 }

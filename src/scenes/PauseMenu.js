@@ -1,47 +1,37 @@
+import { mountScreen } from '../ui/dom.js';
+
 export class PauseMenu extends Phaser.Scene {
     constructor() {
         super('PauseMenu');
     }
 
     create() {
-        // Dim background overlay
-        this.add.rectangle(960, 540, 1920, 1080, 0x000000, 0.5);
+        const screen = mountScreen(this, `
+            <div class="center">
+                <div class="card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+                    <div>
+                        <span class="eyebrow">Game paused</span>
+                        <h1 class="title" id="pause-title">Take a breath</h1>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn--primary btn--lg" id="resume">Resume</button>
+                        <button class="btn" id="menu">Quit to menu</button>
+                    </div>
+                    <p class="muted">Press Esc to resume. Quitting ends this run.</p>
+                </div>
+            </div>
+        `, 'screen--dim');
 
-        this.add.text(960, 400, 'Game Paused', {
-            fontSize: '64px',
-            fill: '#fff',
-            fontFamily: 'Arial'
-        }).setOrigin(0.5);
-
-        const resumeBtn = this.add.text(960, 500, 'Resume', {
-            fontSize: '48px',
-            fill: '#fff',
-            backgroundColor: '#000',
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive();
-
-        const mainMenuBtn = this.add.text(960, 580, 'Main Menu', {
-            fontSize: '48px',
-            fill: '#fff',
-            backgroundColor: '#000',
-            padding: { x: 20, y: 10 }
-        }).setOrigin(0.5).setInteractive();
-
-        resumeBtn.on('pointerdown', () => {
-            this.scene.stop();         // Stop pause scene
-            this.scene.resume('Game'); // Resume game
-        });
-
-        mainMenuBtn.on('pointerdown', () => {
-            this.scene.stop('Game');
-            this.scene.start('MainMenu');
-            this.scene.stop(); // Stop pause scene too
-        });
-
-        // Optional: resume with ESC again
-        this.input.keyboard.on('keydown-ESC', () => {
+        const resume = () => {
             this.scene.stop();
             this.scene.resume('Game');
-        });
+        };
+        screen.querySelector('#resume').onclick = resume;
+        screen.querySelector('#resume').focus();
+        screen.querySelector('#menu').onclick = () => {
+            this.scene.stop('Game');
+            this.scene.start('MainMenu');
+        };
+        this.input.keyboard.once('keydown-ESC', resume);
     }
 }

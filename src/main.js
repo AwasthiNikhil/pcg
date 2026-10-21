@@ -1,3 +1,4 @@
+import './ui/ui.css';
 import { Boot } from './scenes/Boot.js';
 import { Preloader } from './scenes/Preloader.js';
 import { Login } from './scenes/Login.js';
@@ -8,8 +9,8 @@ import { PauseMenu } from './scenes/PauseMenu.js';
 import { Leaderboard } from './scenes/Leaderboard.js';
 import { Settings } from './scenes/Settings.js';
 import { Shop } from './scenes/Shop.js';
+import { Locker } from './scenes/Locker.js';
 import { Help } from './scenes/Help.js';
-import { GameOver } from './scenes/GameOver.js';
 import { LevelComplete } from './scenes/LevelComplete.js';
 
 
@@ -19,7 +20,7 @@ const config = {
     height: 1080,
     parent: 'game-container',
     // backgroundColor: '#028af8',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#0e0e10',
     physics: {
         default: 'arcade',
         arcade: {
@@ -42,9 +43,9 @@ const config = {
         LevelComplete,
         Leaderboard,
         Shop,
+        Locker,
         Settings,
         Help,
-        GameOver,
     ]
 };
 

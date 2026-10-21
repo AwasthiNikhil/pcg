@@ -1,5 +1,7 @@
 import { API_URL } from '../config.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
+import { mountScreen, authLayout, drawBackdrop } from '../ui/dom.js';
+import { startSession } from '../session.js';
 
 export class Login extends Phaser.Scene {
     constructor() {
@@ -9,262 +11,59 @@ export class Login extends Phaser.Scene {
     preload() { }
 
     create() {
-        const screenWidth = 1920;
-        const screenHeight = 1080;
+        drawBackdrop(this, { seed: 'login' });
 
-        // Set full white background behind Phaser canvas (in your HTML or with CSS)
-        document.body.style.backgroundColor = '#ffffff';
+        const screen = mountScreen(this, authLayout(`
+            <h2 class="heading">Sign in</h2>
+            <form class="form" id="login-form" novalidate>
+                <label class="field"><span>Username</span>
+                    <input class="input" id="username" autocomplete="username" required></label>
+                <label class="field"><span>Password</span>
+                    <input class="input" id="password" type="password" autocomplete="current-password" required></label>
+                <p class="message message--error" id="error-msg" role="alert"></p>
+                <button class="btn btn--primary btn--lg btn--block" type="submit">Play</button>
+            </form>
+            <p class="auth-switch">New here? <button type="button" id="register-btn">Create an account</button></p>
+        `));
 
-        // Title
-        this.add.text(screenWidth / 2 - 150, 80, 'Lucky You', { fontSize: '64px', fill: '#000' });
+        this.errorMessage = screen.querySelector('#error-msg');
+        const username = screen.querySelector('#username');
+        const password = screen.querySelector('#password');
+        username.focus();
 
-        // Create wrapper div
-        const wrapper = document.createElement('div');
-        wrapper.id = 'auth-wrapper';
-        document.body.appendChild(wrapper);
-
-        wrapper.innerHTML = `
-            <div class="input-group">
-                <input type="text" id="username" required>
-                <label for="username">Username</label>
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" required>
-                <label for="password">Password</label>
-            </div>
-            <div class="btn-group">
-                <button id="login-btn">Login</button>
-                <button id="register-btn">New to game? Register Here.</button>
-            </div>
-            <p id="error-msg"></p>
-        `;
-
-        // Apply styles (via JS for self-contained )
-        const style = document.createElement('style');
-        style.textContent = `
-            #auth-wrapper {
-                position: absolute;
-                top: 30%;
-                left: 50%;
-                transform: translate(-50%, -30%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-                font-family: Arial, sans-serif;
+        screen.querySelector('#login-form').onsubmit = (e) => {
+            e.preventDefault();
+            if (!username.value.trim() || !password.value) {
+                this.showErrorMessage('Enter your username and password.');
+                return;
             }
-            .input-group {
-                position: relative;
-                width: 400px;
-            }
-            .input-group input {
-                width: 100%;
-                padding: 12px;
-                font-size: 18px;
-                border: 2px solid black;
-                background: white;
-                color: black;
-                outline: none;
-            }
-            .input-group label {
-                position: absolute;
-                top: 12px;
-                left: 12px;
-                color: black;
-                background: white;
-                padding: 0 5px;
-                transition: 0.2s;
-                pointer-events: none;
-            }
-            .input-group input:focus + label,
-            .input-group input:not(:placeholder-shown) + label {
-                top: -10px;
-                font-size: 14px;
-                color: black;
-            }
-            .btn-group {
-                display: flex;
-                gap: 20px;
-            }
-            .btn-group button {
-                width: 180px;
-                padding: 12px;
-                background: white;
-                color: black;
-                border: 2px solid black;
-                font-size: 18px;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
-            .btn-group button:hover {
-                background: #000;
-                color: white;
-            }
-            #error-msg {
-                color: red;
-                font-size: 18px;
-                margin-top: 10px;
-                height: 24px;
-            }
-        `;
-        document.head.appendChild(style);
-
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginButton = document.getElementById('login-btn');
-        const registerButton = document.getElementById('register-btn');
-        this.errorMessage = document.getElementById('error-msg');
-
-        loginButton.onclick = () => {
-            this.login(
-                usernameInput.value,
-                passwordInput.value,
-                wrapper
-            );
+            this.login(username.value.trim(), password.value);
         };
-
-        registerButton.onclick = () => {
-            this.scene.start('Register');
-        };
-
-
-        this.events.on('shutdown', () => {
-            document.getElementById('auth-wrapper')?.remove();
-
-            // Remove any styles injected into <head> by this scene
-            const styles = [...document.head.querySelectorAll('style')];
-            for (const s of styles) {
-                if (s.textContent.includes('#auth-wrapper')) s.remove();
-            }
-        });
-
+        screen.querySelector('#register-btn').onclick = () => this.scene.start('Register');
     }
-    async login(username, password, wrapper) {
-        LoadingSpinner.show("Logging you in...");
+
+    async login(username, password) {
+        LoadingSpinner.show('Signing in');
         try {
             const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-
             const data = await response.json();
-            if (response.status === 200) {
-                const token = data.token;
-
-                // Fetch user settings using token
-                const settings = await this.fetchUserSettings(token);
-                const inventory = await this.fetchUserInventory(token);
-
-                if (!settings) {
-                    this.showErrorMessage('Failed to load user settings.');
-                    return;
-                }
-
-                wrapper.remove();
-                this.registry.set('user', data.user);
-                this.registry.set('token', token);
-                this.registry.set('userSettings', settings);
-                this.registry.set('inventory', inventory);
-
-                this.scene.start('MainMenu');
-            } else {
-                this.showErrorMessage(data.message);
+            if (!response.ok) {
+                this.showErrorMessage(data.message || 'Wrong username or password.');
+                return;
             }
+            await startSession(this.registry, data.token);
+            this.scene.start('MainMenu');
         } catch (error) {
-            console.error('Error logging in:');
-            this.showErrorMessage('Error logging in!');
+            console.error('Error signing in:', error);
+            this.showErrorMessage('Couldn’t reach the server. Try again.');
         } finally {
             LoadingSpinner.hide();
         }
     }
-
-    async register(username, password, wrapper) {
-        LoadingSpinner.show("Registering user info...");
-        try {
-            const response = await fetch(`${API_URL}/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-            if (response.status === 201) {
-                const token = data.token;
-
-                // Fetch user settings using token
-                const settings = await this.fetchUserSettings(token);
-                const inventory = await this.fetchUserInventory(token);
-                
-                if (!settings) {
-                    this.showErrorMessage('Failed to load user settings.');
-                    return;
-                }
-
-                wrapper.remove();
-                this.registry.set('user', data.user);
-                this.registry.set('token', token);
-                this.registry.set('userSettings', settings);
-                this.registry.set('inventory', inventory);
-
-
-                this.scene.start('MainMenu');
-            } else {
-                this.showErrorMessage('Registration failed! Username might already exist.');
-            }
-        } catch (error) {
-            console.error('Error registering:', error);
-            this.showErrorMessage('Error registering!');
-        } finally {
-            LoadingSpinner.hide();
-        }
-    }
-    async fetchUserSettings(token) {
-        LoadingSpinner.show("Saving settings...");
-        try {
-            const response = await fetch(`${API_URL}/settings`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.status === 200) {
-                return await response.json();
-            } else {
-                console.warn('Failed to fetch settings:', await response.text());
-                return null;
-            }
-        } catch (error) {
-            console.error('Error fetching settings:', error);
-            return null;
-        } finally {
-            LoadingSpinner.hide();
-        }
-    }
-
-    async fetchUserInventory(token) {
-        try {
-            const response = await fetch(`${API_URL}/inventory`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const inventoryData = await response.json();
-                console.log('Fetched inventory from /api/inventory (Login.js):', inventoryData); // Debug log
-                return inventoryData;
-            } else {
-                console.error('Failed to fetch inventory:', response.statusText);
-                return [];
-            }
-        } catch (error) {
-            console.error('Error fetching inventory:', error);
-            return [];
-        }
-    }
-
 
     showErrorMessage(message) {
         if (this.errorMessage) {
@@ -272,5 +71,4 @@ export class Login extends Phaser.Scene {
         }
     }
 
-    update() { }
 }

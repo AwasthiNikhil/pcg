@@ -1,3 +1,6 @@
+import { storedToken, startSession, endSession } from '../session.js';
+import { LoadingSpinner } from '../components/LoadingSpinner.js';
+
 export class Preloader extends Phaser.Scene {
     constructor() {
         super('Preloader');
@@ -7,7 +10,11 @@ export class Preloader extends Phaser.Scene {
     }
 
     preload() {
-        //  Load the assets for the game - Replace with your own assets
+        // Progress bar while assets load
+        const bar = this.add.rectangle(960 - 240, 540, 0, 4, 0xf5c542).setOrigin(0, 0.5);
+        this.add.rectangle(960, 540, 480, 4, 0x2c2c34).setDepth(-1);
+        this.load.on('progress', p => { bar.width = 480 * p; });
+
         this.load.setPath('assets');
         this.load.image('star', 'star.png');
         this.load.image('bomb', 'bomb.png');
@@ -33,10 +40,27 @@ export class Preloader extends Phaser.Scene {
         this.load.audio('ingame', 'audio/ingame.mp3');
     }
     create() {
-        //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
-        //  For example, you can define global animations here, so we can use them in other scenes.
+        // Canvas text needs the web fonts loaded before it is first drawn.
+        Promise.all([
+            document.fonts.load('700 32px Unbounded'),
+            document.fonts.load('800 32px Unbounded'),
+            document.fonts.load('600 16px Archivo'),
+        ]).catch(() => {}).finally(() => this.resume());
+    }
 
-        //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
-        this.scene.start('Login');
+    // Signed in before? Go straight to the menu; otherwise to sign-in.
+    async resume() {
+        const token = storedToken();
+        if (!token) return this.scene.start('Login');
+        LoadingSpinner.show('Signing you back in');
+        try {
+            await startSession(this.registry, token);
+            this.scene.start('MainMenu');
+        } catch {
+            endSession(this.registry); // expired or revoked token
+            this.scene.start('Login');
+        } finally {
+            LoadingSpinner.hide();
+        }
     }
 }

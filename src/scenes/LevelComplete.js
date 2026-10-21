@@ -1,138 +1,97 @@
 import { API_URL } from '../config.js';
 import { getAlgorithmForLevel, fetchLevelData } from '../levels.js';
-import {LoadingSpinner} from '../components/LoadingSpinner.js';
+import { LoadingSpinner } from '../components/LoadingSpinner.js';
+import { scoreLevel } from '../scoring.js';
+import { mountScreen, icon, toast } from '../ui/dom.js';
 
 export class LevelComplete extends Phaser.Scene {
     constructor() {
         super('LevelComplete');
     }
+
     init(data) {
         this.levelId = data.levelId;
-        this.levelData = data.levelData;
         this.coinsCollected = data.coinsCollected;
         this.totalCoins = data.totalCoins;
         this.remainingTime = data.remainingTime;
+        this.bestCombo = data.bestCombo || 0;
+        this.kills = data.kills || 0;
+        this.payout = data.payout || 0;
     }
+
     create() {
+        const settings = this.registry.get('userSettings');
+        this.sound.add('level_complete', { volume: settings.sfx_volume / 100 }).play();
 
-        this.userSettings = this.registry.get('userSettings');
-        
-        this.level_complete_sound = this.sound.add('level_complete', {
-            loop: false,
-            volume: this.userSettings.sfx_volume / 100
+        const score = scoreLevel({
+            level: this.levelId,
+            coins: this.coinsCollected,
+            totalCoins: this.totalCoins,
+            kills: this.kills,
+            secondsLeft: this.remainingTime,
+            bestCombo: this.bestCombo,
         });
-        this.level_complete_sound.play();
+        this.submitScore(this.levelId, score.total).catch(error => {
+            console.error('Failed to submit score:', error);
+            toast('Your score couldn’t be saved.', 'error');
+        });
 
-        this.totalScore = 100 + this.coinsCollected * 20 + this.remainingTime * 10;
+        const screen = mountScreen(this, `
+            <div class="center">
+                <div class="card" role="dialog" aria-modal="true" aria-labelledby="done-title">
+                    <div>
+                        <span class="eyebrow">Level ${this.levelId}</span>
+                        <h1 class="title" id="done-title">Cleared</h1>
+                    </div>
+                    <div class="stats">
+                        <div class="stat stat--wide"><span class="eyebrow">Score</span><b>${score.total}</b></div>
+                        <div class="stat"><span class="eyebrow">Coins</span><b>${this.coinsCollected}/${this.totalCoins}</b></div>
+                        <div class="stat"><span class="eyebrow">Earned</span><b>${icon('coin')} +${this.payout}</b></div>
+                    </div>
+                    <div class="breakdown">
+                        ${score.parts.map(([label, points]) => `<div><span>${label}</span><b>${points}</b></div>`).join('')}
+                        <div class="mult"><span>Level ${this.levelId} bonus</span><b>×${score.multiplier.toFixed(1)}</b></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn--primary btn--lg" id="next">Next level</button>
+                        <button class="btn" id="menu">Main menu</button>
+                    </div>
+                </div>
+            </div>
+        `, 'screen--dim');
 
-        // Save score to server
-        try {
-            this.submitScore(this.levelId, this.totalScore);
-        } catch (error) {
-            console.error("Failed to submit score:", error);
-            this.showErrorMessage("Error saving score.");
-        }
-        try {
-            this.addPlayerCoins(this.coinsCollected * 10);
-        } catch (error) {
-            console.error("Failed to add coins:", error);
-            this.showErrorMessage("Error addin coins.");
-        }
-        
-        const screenWidth = this.scale.width;
-        const screenHeight = this.scale.height;
-
-        // Background dim
-        this.add.rectangle(0, 0, screenWidth, screenHeight, 0x000000, 0.7).setOrigin(0);
-
-        this.add.text(screenWidth / 2, screenHeight / 2 - 100, `Level ${this.levelId} Complete!`, {
-            fontSize: '48px',
-            fill: '#ffffff'
-        }).setOrigin(0.5);
-
-        const buttonStyle = { fontSize: '32px', fill: '#fff', backgroundColor: '#333', padding: { x: 20, y: 10 } };
-
-        // Play Next Level Button
-        const nextButton = this.add.text(screenWidth / 2, screenHeight / 2 + 20, 'Play Next Level', buttonStyle).setOrigin(0.5).setInteractive();
-        nextButton.on('pointerdown', async () => {
+        const next = screen.querySelector('#next');
+        next.focus();
+        next.onclick = async () => {
             const nextLevel = this.levelId + 1;
-            const algorithm = getAlgorithmForLevel(nextLevel);
-
-            LoadingSpinner.show("Loading next level. Might take some time.");
-
+            LoadingSpinner.show('Generating the next level');
             try {
-                const levelData = await fetchLevelData(algorithm, nextLevel);
-
-                this.scene.start('Game', {
-                    levelId: nextLevel,
-                    levelData: levelData
-                });
+                const levelData = await fetchLevelData(getAlgorithmForLevel(nextLevel), nextLevel);
+                this.scene.start('Game', { levelId: nextLevel, levelData });
             } catch (error) {
                 console.error('Failed to load next level:', error);
-                this.showErrorMessage('Error loading next level!');
-            }finally{
+                toast('Couldn’t generate the next level. Try again.', 'error');
+            } finally {
                 LoadingSpinner.hide();
             }
-        });
-
-        // Return to Main Menu Button
-        const menuButton = this.add.text(screenWidth / 2, screenHeight / 2 + 80, 'Main Menu', buttonStyle).setOrigin(0.5).setInteractive();
-        menuButton.on('pointerdown', () => {
-            this.scene.start('MainMenu');
-        });
-
-        // coins collected summary
-        this.add.text(screenWidth / 2, screenHeight / 2 - 30, `Coins: ${this.coinsCollected} / ${this.totalCoins}`, {
-            fontSize: '28px',
-            fill: '#ffff00'
-        }).setOrigin(0.5);
+        };
+        screen.querySelector('#menu').onclick = () => this.scene.start('MainMenu');
     }
-    async submitScore(levelId, score) {
+
+    async submitScore(level, score) {
         const response = await fetch(`${API_URL}/scores`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': 'Bearer ' + this.registry.get('token')
             },
-            body: JSON.stringify({
-                level: levelId,
-                score: score
-            })
+            body: JSON.stringify({ level, score })
         });
-
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Failed to submit score');
         }
-
-        return await response.json(); // optional: use returned score data
-    }
-    async addPlayerCoins(coins) {
-        const response = await fetch(`${API_URL}/addCoin`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.registry.get('token')
-            },
-            body: JSON.stringify({
-                coins: coins
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to add coin');
-        }
-
-        return await response.json(); // optional: use returned score data
-    }
-
-    // Display error message if any
-    showErrorMessage(message) {
-        // Optional: create a visible text label at the top or center
-        if (!this.errorText) {
-            this.errorText = this.add.text(100, 100, '', { fontSize: '28px', fill: '#ff0000' });
-        }
-        this.errorText.setText(message);
+        return response.json();
     }
 }
