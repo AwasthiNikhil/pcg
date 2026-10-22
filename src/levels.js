@@ -8,7 +8,8 @@ export function getAlgorithmForLevel(level) {
     if (level <= 6) return 6;  // graph (rooms + corridors)
     if (level <= 8) return 2;  // perlin
     if (level <= 12) return 8; // rooms (Spelunky-style templates)
-    return 7;                  // transformer
+    if (level <= 16) return 9; // Mario model (transformer trained on Super Mario Bros)
+    return 7;                  // Lode Runner model (original transformer)
 }
 
 // Fetch a level grid; parameters grow slowly with the level number.

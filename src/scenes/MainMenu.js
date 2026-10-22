@@ -12,8 +12,9 @@ const GENERATOR_NAMES = {
     4: 'Cellular automata',
     5: 'BSP rooms',
     6: 'Graph rooms',
-    7: 'Transformer model',
+    7: 'Lode Runner model',
     8: 'Room templates',
+    9: 'Mario model',
 };
 
 export class MainMenu extends Phaser.Scene {

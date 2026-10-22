@@ -152,7 +152,8 @@ grid and adjusts the generator settings as the level number goes up:
 | 5–6 | Graph (rooms and corridors) |
 | 7–8 | Perlin noise |
 | 9–12 | Rooms: a Spelunky-style grid of hand-made room templates |
-| 13 and up | Transformer model |
+| 13–16 | Transformer trained on Super Mario Bros levels |
+| 17 and up | Transformer trained on Lode Runner levels |
 
 ### Enemies
 
