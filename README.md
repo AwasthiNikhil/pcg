@@ -5,6 +5,8 @@ key, collect coins and reach the exit before the clock runs out. As you
 progress, each level is built by a different algorithm, and new enemies and
 hazards turn up without warning.
 
+![Mid-dash through a room level: bats overhead, an icicle hanging from the ceiling, a lava pool and coins, with the HUD showing level, time, coins, key, bombs and walls](docs/screenshots/gameplay.png)
+
 This repo is the web client (Phaser 3 + Vite). It is one of three repos:
 
 | Repo | What it is |
@@ -12,6 +14,23 @@ This repo is the web client (Phaser 3 + Vite). It is one of three repos:
 | **pcg** (this one) | The game client |
 | [PCG-for-game-levels-generation](https://github.com/AwasthiNikhil/PCG-for-game-levels-generation) | Level generators and the Flask API |
 | [pcg-db](https://github.com/AwasthiNikhil/pcg-db) | Accounts, scores, shop, skins and the admin dashboard (Laravel 13) |
+
+## Screenshots
+
+A whole generated level, zoomed out. It's a room level (9–12): rooms joined
+by drops, with the key on the left and the exit on the right. Cannons,
+crawlers, a hunter, bats, icicles and lava pools are spread through it.
+
+![The full map of a generated room level, showing the start, key, exit, coins, enemies and lava pools](docs/screenshots/level-overview.png)
+
+| | |
+|---|---|
+| ![Sign-in screen with the Lucky You wordmark over a generated cave backdrop](docs/screenshots/sign-in.png) | ![Main menu with the next level and the generator that will build it, the player's loadout and inventory](docs/screenshots/menu.png) |
+| **Sign in.** Menus sit over a cave backdrop grown by cellular automata. | **Main menu.** It shows the next level and which generator will build it. Fully keyboard navigable. |
+| ![Locker with the pinned loadout and the Characters tab: Rookie, Warrior, Mage and Archer with their perks](docs/screenshots/locker.png) | ![Shop on the Skins tab: Default, Golden, Frost and Ember with their perks, prices and Equip or Buy buttons](docs/screenshots/shop.png) |
+| **Locker.** Your loadout is pinned, with tabs for characters, skins and gear. | **Shop.** Skins with perks and drawbacks, bought on the server. |
+| ![Level complete card with the score and its breakdown: level clear, coins, time left, best combo and the level bonus](docs/screenshots/level-complete.png) | ![How to play: goal, the level-by-level generators, and the controls showing the player's current key bindings](docs/screenshots/how-to-play.png) |
+| **Level complete.** The full score breakdown. | **How to play.** It reads your own key bindings, so a rebind shows up here. |
 
 ## Run the whole game locally
 
